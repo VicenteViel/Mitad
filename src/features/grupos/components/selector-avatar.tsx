@@ -18,15 +18,30 @@ const TRANSPARENTE = 'rgba(0, 0, 0, 0)';
 type Props = {
   value: Avatar;
   onChange: (avatar: Avatar) => void;
+  // Versión pequeña para ponerla al lado de un campo de texto.
+  compacto?: boolean;
 };
 
 // Dos figuras en un mismo contenedor. La elegida se pinta de azul (hombre)
 // o rosado (mujer) con una pequeña animación de rebote.
-export function SelectorAvatar({ value, onChange }: Props) {
+export function SelectorAvatar({ value, onChange, compacto = false }: Props) {
   return (
-    <View style={styles.contenedor} accessibilityRole="radiogroup">
-      <Opcion avatar="hombre" seleccionado={value === 'hombre'} onPress={() => onChange('hombre')} />
-      <Opcion avatar="mujer" seleccionado={value === 'mujer'} onPress={() => onChange('mujer')} />
+    <View
+      style={[styles.contenedor, compacto && styles.contenedorCompacto]}
+      accessibilityRole="radiogroup"
+    >
+      <Opcion
+        avatar="hombre"
+        seleccionado={value === 'hombre'}
+        onPress={() => onChange('hombre')}
+        compacto={compacto}
+      />
+      <Opcion
+        avatar="mujer"
+        seleccionado={value === 'mujer'}
+        onPress={() => onChange('mujer')}
+        compacto={compacto}
+      />
     </View>
   );
 }
@@ -35,9 +50,10 @@ type OpcionProps = {
   avatar: Avatar;
   seleccionado: boolean;
   onPress: () => void;
+  compacto: boolean;
 };
 
-function Opcion({ avatar, seleccionado, onPress }: OpcionProps) {
+function Opcion({ avatar, seleccionado, onPress, compacto }: OpcionProps) {
   const progreso = useSharedValue(seleccionado ? 1 : 0);
   const escala = useSharedValue(1);
   const colorActivo = COLORES[colorPorDefecto(avatar)];
@@ -60,14 +76,17 @@ function Opcion({ avatar, seleccionado, onPress }: OpcionProps) {
   return (
     <Pressable
       onPress={onPress}
-      style={styles.pressable}
+      style={compacto ? undefined : styles.pressable}
+      hitSlop={compacto ? 6 : undefined}
       accessibilityRole="radio"
       accessibilityState={{ checked: seleccionado }}
       accessibilityLabel={avatar === 'hombre' ? 'Hombre' : 'Mujer'}
     >
-      <Animated.View style={[styles.celda, estiloCelda]}>
+      <Animated.View style={[styles.celda, compacto && styles.celdaCompacta, estiloCelda]}>
         <Animated.View style={estiloFigura}>
-          <Figura avatar={avatar} color={seleccionado ? BLANCO : GRIS} />
+          <View style={compacto && styles.figuraCompacta}>
+            <Figura avatar={avatar} color={seleccionado ? BLANCO : GRIS} />
+          </View>
         </Animated.View>
       </Animated.View>
     </Pressable>
@@ -100,6 +119,7 @@ const styles = StyleSheet.create({
     padding: 6,
     gap: 6,
   },
+  contenedorCompacto: { borderRadius: 12, padding: 4, gap: 4 },
   pressable: { flex: 1 },
   celda: {
     height: 72,
@@ -107,6 +127,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  celdaCompacta: { width: 44, height: 44, borderRadius: 9 },
+  figuraCompacta: { transform: [{ scale: 0.65 }] },
   figura: { width: ANCHO_FIGURA, height: 48 },
   cabeza: {
     position: 'absolute',

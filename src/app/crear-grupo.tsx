@@ -28,7 +28,7 @@ export default function CrearGrupoScreen() {
 
     mutate(datos, {
       onSuccess: (grupoId) =>
-        router.replace({ pathname: '/agregar-integrantes', params: { grupoId } }),
+        router.replace({ pathname: '/cantidad-integrantes', params: { grupoId } }),
     });
   }
 
