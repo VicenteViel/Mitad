@@ -25,11 +25,10 @@ export default function RootLayout() {
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Protected guard={!sesion}>
             <Stack.Screen name="ingresar" />
-            
           </Stack.Protected>
           <Stack.Protected guard={!!sesion}>
             <Stack.Screen name="index" />
-            <Stack.Screen name="crear-grupo" />
+            <Stack.Screen name="(nuevo-grupo)" />
           </Stack.Protected>
         </Stack>
       </ThemeProvider>

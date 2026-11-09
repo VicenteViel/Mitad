@@ -1,8 +1,9 @@
 import { router, useTheme } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { useCrearGrupo } from '@/features/grupos/use-crear-grupo';
+import { useBorradorGrupo } from '@/features/grupos/borrador-grupo-context';
+import { SelectorAvatar } from '@/features/grupos/components/selector-avatar';
 import {
   LIMITES,
   validarNuevoGrupo,
@@ -11,19 +12,20 @@ import {
 
 export default function CrearGrupoScreen() {
   const { colors } = useTheme();
-  const [nombre, setNombre] = useState('');
-  const [descripcion, setDescripcion] = useState('');
-  const [nombreIntegrante, setNombreIntegrante] = useState('');
+  const { borrador, actualizarGrupo, actualizarYo } = useBorradorGrupo();
   const [errores, setErrores] = useState<ErroresNuevoGrupo>({});
-  const { mutate, isPending, error } = useCrearGrupo();
 
-  function crear() {
-    const datos = { nombre, descripcion, nombreIntegrante };
-    const nuevosErrores = validarNuevoGrupo(datos);
+  // Todavía no se guarda nada: solo se valida y se avanza con el borrador.
+  function continuar() {
+    const nuevosErrores = validarNuevoGrupo({
+      nombre: borrador.nombre,
+      descripcion: borrador.descripcion,
+      nombreIntegrante: borrador.yo.nombre,
+    });
     setErrores(nuevosErrores);
     if (Object.keys(nuevosErrores).length > 0) return;
 
-    mutate(datos, { onSuccess: () => router.back() });
+    router.push('/cantidad-integrantes');
   }
 
   const inputStyle = [styles.input, { color: colors.text, borderColor: colors.border }];
@@ -35,8 +37,8 @@ export default function CrearGrupoScreen() {
       <Text style={[styles.label, { color: colors.text }]}>Nombre del grupo</Text>
       <TextInput
         style={inputStyle}
-        value={nombre}
-        onChangeText={setNombre}
+        value={borrador.nombre}
+        onChangeText={(nombre) => actualizarGrupo({ nombre })}
         placeholder="Depto Ñuñoa"
         placeholderTextColor="#888"
         maxLength={LIMITES.nombre}
@@ -47,8 +49,8 @@ export default function CrearGrupoScreen() {
       <Text style={[styles.label, { color: colors.text }]}>Descripción (opcional)</Text>
       <TextInput
         style={inputStyle}
-        value={descripcion}
-        onChangeText={setDescripcion}
+        value={borrador.descripcion}
+        onChangeText={(descripcion) => actualizarGrupo({ descripcion })}
         placeholder="Gastos del depto"
         placeholderTextColor="#888"
         maxLength={LIMITES.descripcion}
@@ -59,8 +61,8 @@ export default function CrearGrupoScreen() {
       <Text style={[styles.label, { color: colors.text }]}>Tu nombre en el grupo</Text>
       <TextInput
         style={inputStyle}
-        value={nombreIntegrante}
-        onChangeText={setNombreIntegrante}
+        value={borrador.yo.nombre}
+        onChangeText={(nombre) => actualizarYo({ nombre })}
         placeholder="Vicente"
         placeholderTextColor="#888"
         maxLength={LIMITES.nombreIntegrante}
@@ -69,19 +71,15 @@ export default function CrearGrupoScreen() {
       />
       {errores.nombreIntegrante && <Text style={styles.error}>{errores.nombreIntegrante}</Text>}
 
-      {error && <Text style={styles.error}>No pudimos crear el grupo. Intenta de nuevo.</Text>}
+      <Text style={[styles.label, { color: colors.text }]}>Tu ícono</Text>
+      <SelectorAvatar value={borrador.yo.avatar} onChange={(avatar) => actualizarYo({ avatar })} />
 
       <Pressable
-        style={[styles.button, { backgroundColor: colors.primary, opacity: isPending ? 0.6 : 1 }]}
-        onPress={crear}
-        disabled={isPending}
+        style={[styles.button, { backgroundColor: colors.primary }]}
+        onPress={continuar}
         accessibilityRole="button"
       >
-        {isPending ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Crear grupo</Text>
-        )}
+        <Text style={styles.buttonText}>Continuar</Text>
       </Pressable>
     </View>
   );
