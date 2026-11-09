@@ -6,9 +6,12 @@ export const LIMITES = {
   nombreIntegrante: 40,
 } as const;
 
-export type ErroresNuevoGrupo = Partial<Record<keyof NuevoGrupo, string>>;
+// Campos de texto del formulario. El ícono no se valida: siempre tiene un valor.
+export type DatosGrupo = Omit<NuevoGrupo, 'avatar'>;
 
-export function validarNuevoGrupo(datos: NuevoGrupo): ErroresNuevoGrupo {
+export type ErroresNuevoGrupo = Partial<Record<keyof DatosGrupo, string>>;
+
+export function validarNuevoGrupo(datos: DatosGrupo): ErroresNuevoGrupo {
   const errores: ErroresNuevoGrupo = {};
 
   const nombre = datos.nombre.trim();

@@ -30,6 +30,7 @@ export default function RootLayout() {
           <Stack.Protected guard={!!sesion}>
             <Stack.Screen name="index" />
             <Stack.Screen name="crear-grupo" />
+            <Stack.Screen name="agregar-integrantes" options={{ gestureEnabled: false }} />
           </Stack.Protected>
         </Stack>
       </ThemeProvider>

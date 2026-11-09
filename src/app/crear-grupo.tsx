@@ -2,6 +2,8 @@ import { router, useTheme } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import type { Avatar } from '@/features/grupos/apariencia';
+import { SelectorAvatar } from '@/features/grupos/components/selector-avatar';
 import { useCrearGrupo } from '@/features/grupos/use-crear-grupo';
 import {
   LIMITES,
@@ -14,16 +16,20 @@ export default function CrearGrupoScreen() {
   const [nombre, setNombre] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [nombreIntegrante, setNombreIntegrante] = useState('');
+  const [avatar, setAvatar] = useState<Avatar>('hombre');
   const [errores, setErrores] = useState<ErroresNuevoGrupo>({});
   const { mutate, isPending, error } = useCrearGrupo();
 
   function crear() {
-    const datos = { nombre, descripcion, nombreIntegrante };
+    const datos = { nombre, descripcion, nombreIntegrante, avatar };
     const nuevosErrores = validarNuevoGrupo(datos);
     setErrores(nuevosErrores);
     if (Object.keys(nuevosErrores).length > 0) return;
 
-    mutate(datos, { onSuccess: () => router.back() });
+    mutate(datos, {
+      onSuccess: (grupoId) =>
+        router.replace({ pathname: '/agregar-integrantes', params: { grupoId } }),
+    });
   }
 
   const inputStyle = [styles.input, { color: colors.text, borderColor: colors.border }];
@@ -68,6 +74,9 @@ export default function CrearGrupoScreen() {
         accessibilityLabel="Tu nombre en el grupo"
       />
       {errores.nombreIntegrante && <Text style={styles.error}>{errores.nombreIntegrante}</Text>}
+
+      <Text style={[styles.label, { color: colors.text }]}>Tu ícono</Text>
+      <SelectorAvatar value={avatar} onChange={setAvatar} />
 
       {error && <Text style={styles.error}>No pudimos crear el grupo. Intenta de nuevo.</Text>}
 

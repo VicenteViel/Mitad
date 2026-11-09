@@ -62,6 +62,8 @@ export type Database = {
       }
       integrantes: {
         Row: {
+          avatar: string
+          color: string
           grupo_id: string
           id: string
           nombre: string
@@ -71,6 +73,8 @@ export type Database = {
           usuario_id: string | null
         }
         Insert: {
+          avatar: string
+          color: string
           grupo_id: string
           id?: string
           nombre: string
@@ -80,6 +84,8 @@ export type Database = {
           usuario_id?: string | null
         }
         Update: {
+          avatar?: string
+          color?: string
           grupo_id?: string
           id?: string
           nombre?: string
@@ -103,8 +109,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      agregar_integrantes: {
+        Args: { p_grupo_id: string; p_integrantes: Json }
+        Returns: number
+      }
       crear_grupo: {
         Args: {
+          p_avatar: string
           p_descripcion: string
           p_nombre: string
           p_nombre_integrante: string
