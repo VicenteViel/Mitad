@@ -1,7 +1,11 @@
 import { useTheme } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
+import { Pressable } from 'react-native';
+import { useSesion } from '@/features/auth/use-sesion';
+import { supabase } from '@/lib/supabase';
 
 export default function HomeScreen() {
+  const { sesion } = useSesion();
   const { colors } = useTheme();
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -9,8 +13,14 @@ export default function HomeScreen() {
       <Text style={[styles.subtitle, { color: colors.text }]}>
         Comparte gastos. Comparte responsabilidades.
       </Text>
+      <Text style={{ color: colors.text, marginTop: 24 }}>{sesion?.user.email}</Text>
+<Pressable onPress={() => supabase.auth.signOut()} accessibilityRole="button">
+  <Text style={{ color: colors.primary, marginTop: 12 }}>Cerrar sesión</Text>
+</Pressable>
     </View>
+    
   );
+  
 }
 
 const styles = StyleSheet.create({

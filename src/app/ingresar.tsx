@@ -1,0 +1,135 @@
+import { useTheme } from 'expo-router';
+import { useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+
+import { supabase } from '@/lib/supabase';
+
+const CORREO_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export default function IngresarScreen() {
+  const { colors } = useTheme();
+  const [paso, setPaso] = useState<'correo' | 'codigo'>('correo');
+  const [correo, setCorreo] = useState('');
+  const [codigo, setCodigo] = useState('');
+  const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function enviarCodigo() {
+    const limpio = correo.trim().toLowerCase();
+    if (!CORREO_VALIDO.test(limpio)) {
+      setError('Escribe un correo válido.');
+      return;
+    }
+    setEnviando(true);
+    setError(null);
+    const { error: errorEnvio } = await supabase.auth.signInWithOtp({ email: limpio });
+    setEnviando(false);
+    if (errorEnvio) {
+        if (__DEV__) console.warn('Error al enviar código:', errorEnvio.message);
+      setError('No pudimos enviar el código. Espera un minuto e intenta de nuevo.');
+      return;
+    }
+    setCorreo(limpio);
+    setPaso('codigo');
+  }
+
+  async function verificarCodigo() {
+    if (!/^\d{6}$/.test(codigo)) {
+      setError('El código tiene 6 dígitos.');
+      return;
+    }
+    setEnviando(true);
+    setError(null);
+    const { error: errorCodigo } = await supabase.auth.verifyOtp({
+      email: correo,
+      token: codigo,
+      type: 'email',
+    });
+    setEnviando(false);
+    if (errorCodigo) setError('Código incorrecto o vencido.');
+    // Si es correcto, onAuthStateChange actualiza la sesión y el layout cambia de pantalla.
+  }
+
+  const inputStyle = [styles.input, { color: colors.text, borderColor: colors.border }];
+
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.title, { color: colors.text }]}>Mitad</Text>
+
+      {paso === 'correo' ? (
+        <>
+          <Text style={[styles.label, { color: colors.text }]}>Tu correo</Text>
+          <TextInput
+            style={inputStyle}
+            value={correo}
+            onChangeText={setCorreo}
+            placeholder="nombre@correo.com"
+            placeholderTextColor="#888"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoComplete="email"
+            textContentType="emailAddress"
+            accessibilityLabel="Correo electrónico"
+          />
+        </>
+      ) : (
+        <>
+          <Text style={[styles.label, { color: colors.text }]}>
+            Escribe el código que enviamos a {correo}
+          </Text>
+          <TextInput
+            style={inputStyle}
+            value={codigo}
+            onChangeText={setCodigo}
+            placeholder="123456"
+            placeholderTextColor="#888"
+            keyboardType="number-pad"
+            maxLength={6}
+            autoComplete="one-time-code"
+            textContentType="oneTimeCode"
+            accessibilityLabel="Código de 6 dígitos"
+          />
+        </>
+      )}
+
+      {error && <Text style={styles.error}>{error}</Text>}
+
+      <Pressable
+        style={[styles.button, { backgroundColor: colors.primary, opacity: enviando ? 0.6 : 1 }]}
+        onPress={paso === 'correo' ? enviarCodigo : verificarCodigo}
+        disabled={enviando}
+        accessibilityRole="button"
+      >
+        {enviando ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.buttonText}>{paso === 'correo' ? 'Enviar código' : 'Ingresar'}</Text>
+        )}
+      </Pressable>
+
+      {paso === 'codigo' && (
+        <Pressable
+          onPress={() => {
+            setPaso('correo');
+            setCodigo('');
+            setError(null);
+          }}
+          accessibilityRole="button"
+        >
+          <Text style={[styles.link, { color: colors.primary }]}>Cambiar correo</Text>
+        </Pressable>
+      )}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, justifyContent: 'center', padding: 24, gap: 12 },
+  title: { fontSize: 40, fontWeight: '700', textAlign: 'center', marginBottom: 24 },
+  label: { fontSize: 16 },
+  input: { borderWidth: 1, borderRadius: 12, padding: 14, fontSize: 18 },
+  error: { color: '#D93025', fontSize: 14 },
+  button: { borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 8 },
+  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  link: { textAlign: 'center', fontSize: 15, marginTop: 8 },
+});
