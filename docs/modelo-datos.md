@@ -1,6 +1,6 @@
 # Modelo de datos — Etapa 1
 
-Diseño conceptual aprobado el 2026-11-09. No es SQL: describe tablas, reglas y cálculos para implementarlos después. Las decisiones de producto están en [decisiones.md](decisiones.md).
+Diseño conceptual aprobado el 2026-11-09 (actualizado el mismo día: integrantes pendientes y apariencia). No es SQL: describe tablas, reglas y cálculos para implementarlos después. Las decisiones de producto están en [decisiones.md](decisiones.md).
 
 ## Principios
 
@@ -12,7 +12,10 @@ Diseño conceptual aprobado el 2026-11-09. No es SQL: describe tablas, reglas y 
 ## Relaciones
 
 - Un **grupo** tiene integrantes, invitaciones, gastos y liquidaciones.
-- Un **integrante** puede tener un usuario vinculado (registrado o sin cuenta). Sin usuario vinculado, es ex-integrante.
+- Un **integrante** puede tener un usuario vinculado (registrado o sin cuenta). Su estado se deduce de dos campos, sin guardarlo aparte:
+  - **Activo:** tiene `usuario_id`.
+  - **Pendiente:** sin `usuario_id` y sin `salio_en`. Lo agregó un admin y aún no acepta su invitación (o nunca usará la app).
+  - **Ex-integrante:** sin `usuario_id` y con `salio_en`.
 - Un **gasto** lo pagó un integrante y se reparte en **participaciones**, una por integrante.
 - Una **liquidación** va de un integrante a otro.
 - Los usuarios viven en Supabase Auth. Si un usuario es registrado o sin cuenta se lee de ahí; no se copia a estas tablas.
@@ -44,13 +47,17 @@ Solo lo ve su dueño. El correo queda en Supabase Auth y nunca se muestra a otro
 |---|---|---|
 | `id` | uuid | |
 | `grupo_id` | uuid → grupos | |
-| `usuario_id` | uuid → usuario | Opcional. Vacío = ex-integrante |
+| `usuario_id` | uuid → usuario | Opcional. Vacío = pendiente o ex-integrante (ver Relaciones) |
 | `nombre` | text | Nombre visible en este grupo |
 | `rol` | text | `admin` o `integrante` |
-| `unido_en` | timestamptz | Define el orden de llegada |
+| `avatar` | text | `hombre` o `mujer`. Ícono que se muestra |
+| `color` | text | Lista fija de colores. Por defecto `azul` (hombre) o `rosado` (mujer) |
+| `unido_en` | timestamptz | Define el orden de llegada. Para un pendiente, cuándo lo agregaron |
 | `salio_en` | timestamptz | Opcional |
 
 - Un usuario puede estar vinculado a un solo integrante por grupo.
+- `avatar` y `color` son apariencia, no datos personales: el integrante activo los cambia desde su perfil; los de un pendiente los cambia un admin.
+- Un pendiente nunca es admin.
 - El nombre se guarda aquí y no en el perfil: se conserva si la persona sale, y anonimizar es cambiar solo este campo a "Ex-integrante".
 - Re-vincular es cambiar `usuario_id`.
 - Solo un integrante con usuario registrado puede ser admin.
@@ -72,7 +79,8 @@ Solo lo ve su dueño. El correo queda en Supabase Auth y nunca se muestra a otro
 
 - Es válida si no está usada, ni revocada, ni vencida.
 - Solo se guarda el hash: quien lea la base de datos no obtiene links válidos. Por eso un QR no se puede volver a mostrar; se genera uno nuevo.
-- `integrante_id` solo puede apuntar a integrantes sin cuenta o ex-integrantes.
+- `integrante_id` solo puede apuntar a integrantes pendientes, sin cuenta o ex-integrantes.
+- Cada pendiente tiene su propia invitación con `integrante_id`. Al aceptarla, la persona queda vinculada a ese integrante con su nombre, gastos y saldo.
 
 ### gastos
 
@@ -114,7 +122,7 @@ Solo lo ve su dueño. El correo queda en Supabase Auth y nunca se muestra a otro
 | `a` | uuid → integrantes | Quien recibe. Distinto de `de` |
 | `monto` | integer | Pesos, mayor que 0 |
 | `fecha` | date | |
-| `declarada_por` | uuid → integrantes | Una de las partes, o un admin si la otra ya salió |
+| `declarada_por` | uuid → integrantes | Una de las partes, o un admin si la otra ya salió. Si una parte es pendiente, solo un admin |
 | `clave_idempotencia` | uuid | Única por grupo |
 | `version` | integer | Sube en cada edición |
 | `creado_en` | timestamptz | |
@@ -160,7 +168,7 @@ Gastos y liquidaciones del grupo, del más reciente al más antiguo (por `fecha`
 
 ## Salir del grupo y eliminar la cuenta
 
-- **Salir:** el integrante queda sin usuario, se marca `salio_en` y pierde el rol de admin. Si era el último admin, pasa a serlo el integrante registrado más antiguo (si no queda ninguno, el grupo queda sin admin hasta que alguien agregue su correo; regla 41). Si era el último integrante activo, el grupo y sus datos se borran.
+- **Salir:** el integrante queda sin usuario, se marca `salio_en` y pierde el rol de admin. Si era el último admin, pasa a serlo el integrante registrado más antiguo (si no queda ninguno, el grupo queda sin admin hasta que alguien agregue su correo; regla 41). Si era el último integrante activo, el grupo y sus datos se borran, aunque queden pendientes.
 - **Eliminar la cuenta:** lo mismo en cada grupo del usuario; además el nombre pasa a "Ex-integrante" y se borran el perfil y el usuario.
 
 ## Seguridad
@@ -176,15 +184,17 @@ Gastos y liquidaciones del grupo, del más reciente al más antiguo (por `fecha`
 | Grupos | Crear grupo | Usuarios registrados |
 | | Editar grupo | Admins |
 | | Cambiar rol | Admins (admin solo a registrados; nunca quitar el último admin) |
+| | Agregar integrante pendiente (nombre, ícono, color) | Admins |
+| | Cambiar apariencia (ícono y color) | El propio integrante activo; un admin para los pendientes |
 | | Quitar integrante | Admins |
 | | Salir del grupo | Cualquier integrante |
 | | Tomar el rol de admin | Integrante registrado, solo si el grupo no tiene admin |
 | Invitaciones | Crear y revocar | Admins |
 | | Ver (muestra el grupo antes de unirse) | Quien tenga el link |
 | | Aceptar (unirse o re-vincular) | Quien tenga el link |
-| Gastos | Crear | Cualquier integrante activo |
+| Gastos | Crear (participantes: activos y pendientes) | Cualquier integrante activo; si lo pagó un pendiente, solo admins |
 | | Editar y borrar | Admins |
-| Liquidaciones | Registrar | Una de las partes, o un admin si la otra ya salió |
+| Liquidaciones | Registrar | Una de las partes, o un admin si la otra ya salió; si una parte es pendiente, solo admins |
 | | Editar y borrar | Admins |
 | Cuenta | Cambiar mi nombre (actualiza mis integrantes activos) | El propio usuario |
 | | Eliminar cuenta (Edge Function) | El propio usuario |
@@ -204,7 +214,7 @@ Gastos y liquidaciones del grupo, del más reciente al más antiguo (por `fecha`
 ## Fuera de la Etapa 1
 
 - Moneda (todo es CLP).
-- Fotos de perfil y de grupo (se usan iniciales).
+- Fotos de perfil y de grupo (se usan ícono + color).
 - Preferencias guardadas (el grupo activo se recuerda en el teléfono).
 - Zona horaria del grupo (llega con Hoy Te Toca).
 - Realtime.
