@@ -1,4 +1,3 @@
-import type { NuevoIntegrante } from './api';
 import { LIMITES } from './validar-nuevo-grupo';
 
 export const MAX_INTEGRANTES_POR_VEZ = 20;
@@ -9,12 +8,11 @@ export type ErroresIntegrantes = {
   porFila: Record<number, string>;
 };
 
-export function validarIntegrantes(integrantes: NuevoIntegrante[]): ErroresIntegrantes {
+// La lista puede estar vacía: alguien que vive solo inicia el grupo sin pendientes.
+export function validarIntegrantes(integrantes: { nombre: string }[]): ErroresIntegrantes {
   const errores: ErroresIntegrantes = { porFila: {} };
 
-  if (integrantes.length === 0) {
-    errores.general = 'Agrega al menos un integrante.';
-  } else if (integrantes.length > MAX_INTEGRANTES_POR_VEZ) {
+  if (integrantes.length > MAX_INTEGRANTES_POR_VEZ) {
     errores.general = `Máximo ${MAX_INTEGRANTES_POR_VEZ} integrantes a la vez.`;
   }
 

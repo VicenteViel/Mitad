@@ -113,16 +113,18 @@ export type Database = {
         Args: { p_grupo_id: string; p_integrantes: Json }
         Returns: number
       }
-      crear_grupo: {
+      es_integrante: { Args: { p_grupo_id: string }; Returns: boolean }
+      iniciar_grupo: {
         Args: {
           p_avatar: string
+          p_color: string
           p_descripcion: string
+          p_integrantes: Json
           p_nombre: string
           p_nombre_integrante: string
         }
         Returns: string
       }
-      es_integrante: { Args: { p_grupo_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

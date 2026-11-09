@@ -1,7 +1,8 @@
-import { router, useLocalSearchParams, useTheme } from 'expo-router';
+import { router, useTheme } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { useBorradorGrupo } from '@/features/grupos/borrador-grupo-context';
 import { MAX_INTEGRANTES_POR_VEZ } from '@/features/grupos/validar-integrantes';
 
 // El total de la casa te incluye a ti; el resto se agrega como pendientes.
@@ -10,18 +11,15 @@ const MAX_TOTAL = MAX_INTEGRANTES_POR_VEZ + 1;
 
 export default function CantidadIntegrantesScreen() {
   const { colors } = useTheme();
-  const { grupoId } = useLocalSearchParams<{ grupoId: string }>();
-  const [total, setTotal] = useState(2);
+  const { borrador, definirCantidad } = useBorradorGrupo();
+  // Si se vuelve a esta pantalla, parte desde lo que ya se había elegido.
+  const [total, setTotal] = useState(() =>
+    borrador.integrantes.length > 0 ? borrador.integrantes.length + 1 : 2,
+  );
 
   function continuar() {
-    if (!grupoId || total === 1) {
-      router.replace('/');
-      return;
-    }
-    router.push({
-      pathname: '/agregar-integrantes',
-      params: { grupoId, cantidad: String(total - 1) },
-    });
+    definirCantidad(total - 1);
+    router.push(total === 1 ? '/resumen-grupo' : '/agregar-integrantes');
   }
 
   const puedeRestar = total > MIN_TOTAL;

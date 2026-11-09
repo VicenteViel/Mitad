@@ -1,5 +1,3 @@
-import type { NuevoGrupo } from './api';
-
 export const LIMITES = {
   nombre: 60,
   descripcion: 200,
@@ -7,7 +5,11 @@ export const LIMITES = {
 } as const;
 
 // Campos de texto del formulario. El ícono no se valida: siempre tiene un valor.
-export type DatosGrupo = Omit<NuevoGrupo, 'avatar'>;
+export type DatosGrupo = {
+  nombre: string;
+  descripcion?: string;
+  nombreIntegrante: string;
+};
 
 export type ErroresNuevoGrupo = Partial<Record<keyof DatosGrupo, string>>;
 
