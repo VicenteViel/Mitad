@@ -9,7 +9,7 @@ export default function HomeScreen() {
   const { colors } = useTheme();
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Text style={[styles.title, { color: colors.text }]}>Mitad</Text>
+      <Text style={[styles.title, { color: colors.text }]}>Rumi</Text>
       <Text style={[styles.subtitle, { color: colors.text }]}>
         Comparte gastos. Comparte responsabilidades.
       </Text>

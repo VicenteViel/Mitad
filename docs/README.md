@@ -1,13 +1,13 @@
-# Mitad
-# Mitad
+# Rumi
+# Rumi
 
 ### Comparte gastos. Comparte responsabilidades.
 
-**Mitad** es una aplicación móvil para Android e iOS diseñada para simplificar la administración de gastos compartidos y la organización de tareas del hogar.
+**Rumi** es una aplicación móvil para Android e iOS diseñada para simplificar la administración de gastos compartidos y la organización de tareas del hogar.
 
-Pensada para parejas, familias, amigos y compañeros de departamento, Mitad reúne en una sola plataforma las herramientas necesarias para gestionar la convivencia de manera sencilla, transparente y organizada.
+Pensada para parejas, familias, amigos y compañeros de departamento, Rumi reúne en una sola plataforma las herramientas necesarias para gestionar la convivencia de manera sencilla, transparente y organizada.
 
-El proyecto sigue un modelo **Freemium**: la administración de gastos es gratuita, mientras que la organización avanzada de responsabilidades domésticas forma parte de **Mitad Pro**.
+El proyecto sigue un modelo **Freemium**: la administración de gastos es gratuita, mientras que la organización avanzada de responsabilidades domésticas forma parte de **Rumi Pro**.
 
 > **Estado del proyecto:** En planificación y desarrollo inicial. Las funcionalidades descritas corresponden al alcance previsto y aún no están disponibles públicamente.
 
@@ -15,7 +15,7 @@ El proyecto sigue un modelo **Freemium**: la administración de gastos es gratui
 
 ## Funcionalidades
 
-### Mitad — Gestión de gastos (Gratis)
+### Rumi — Gestión de gastos (Gratis)
 
 Permite llevar un control claro de los gastos realizados entre varias personas.
 
@@ -145,7 +145,7 @@ El sistema está diseñado para contemplar:
 - Integridad de los cálculos financieros.
 - Gestión segura de suscripciones.
 
-Mitad no tiene previsto acceder directamente a cuentas bancarias ni ejecutar transferencias de dinero.
+Rumi no tiene previsto acceder directamente a cuentas bancarias ni ejecutar transferencias de dinero.
 
 ---
 
@@ -184,4 +184,4 @@ Licencia y condiciones de uso pendientes de definición.
 
 ---
 
-**Mitad — Compartir es más fácil cuando todo está claro.**
+**Rumi — Compartir es más fácil cuando todo está claro.**
