@@ -1,14 +1,14 @@
-# Decisiones — Mitad
+# Decisiones — Rumi
 
 Registro de las decisiones de producto y arquitectura. Si una decisión cambia, se edita aquí y se actualiza la fecha.
 
 - **Última actualización:** 2026-11-09
-- **Estado:** Etapa 1 (Mitad gratis) definida y con modelo de datos aprobado. Etapas 2 y 3 con decisiones pendientes.
+- **Estado:** Etapa 1 (Rumi gratis) definida y con modelo de datos aprobado. Etapas 2 y 3 con decisiones pendientes.
 - **Modelo de datos:** [modelo-datos.md](modelo-datos.md)
 
 ---
 
-## Etapa 1 — Mitad gratis
+## Etapa 1 — Rumi gratis
 
 ### Grupos e integrantes
 
@@ -57,7 +57,7 @@ Registro de las decisiones de producto y arquitectura. Si una decisión cambia, 
 26. **Dos proyectos Supabase:** desarrollo y producción. La beta corre en producción.
 27. **Beta cerrada** en TestFlight y en prueba cerrada de Google Play. Los datos de la beta son reales: las migraciones deben conservarlos.
 28. **Desarrollo en Windows; pruebas de iOS en un iPhone físico con Expo Go.** Para la beta se necesita Apple Developer (99 USD/año).
-29. **Repositorio:** `C:\Users\vicen\Desktop\Mitad`, fuera de OneDrive, un solo repo git (remoto `github.com/VicenteViel/Mitad`).
+29. **Repositorio:** `C:\Users\vicen\Desktop\Rumi\Rumi`, fuera de OneDrive, un solo repo git (remoto `github.com/VicenteViel/Rumi`).
 
 ### Reglas surgidas del modelo de datos
 
@@ -81,7 +81,7 @@ Detalle de tablas, cálculos y funciones en [modelo-datos.md](modelo-datos.md).
 ## Pendiente antes de la beta (no bloquea empezar)
 
 - **¿Persona natural o empresa?** Define el vendedor que aparece en las tiendas. La regla de Google de 12 testers durante 14 días aplica a cuentas personales nuevas. Una cuenta de empresa requiere número D-U-N-S, que puede tardar días o semanas.
-- **Nombre definitivo, dominio e identificador de la app** (tipo `cl.tuempresa.mitad`). El identificador no se puede cambiar después de subir la primera beta.
+- **Nombre definitivo, dominio e identificador de la app** (tipo `cl.tuempresa.rumi`). El identificador no se puede cambiar después de subir la primera beta.
 - **Política de privacidad.** La exigen las tiendas.
 - **Plan de Supabase.** El plan gratis pausa un proyecto tras 7 días sin actividad. Para la beta conviene evaluar Pro (25 USD/mes).
 - **Acceso demo para la revisión de Apple** (TestFlight externo), porque el login es por OTP.

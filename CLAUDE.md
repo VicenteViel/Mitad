@@ -1,12 +1,12 @@
-# MITAD — Instrucciones para Claude Code
+# RUMI — Instrucciones para Claude Code
 
 ## 1. Contexto del proyecto
 
-**Mitad** es una aplicación móvil multiplataforma para Android e iOS, destinada a parejas, familias, amigos y compañeros de departamento que necesitan compartir gastos y organizar responsabilidades domésticas.
+**Rumi** es una aplicación móvil multiplataforma para Android e iOS, destinada a parejas, familias, amigos y compañeros de departamento que necesitan compartir gastos y organizar responsabilidades domésticas.
 
 El producto utiliza un modelo Freemium dividido en dos módulos:
 
-### Mitad — Gratuito
+### Rumi — Gratuito
 
 - Creación de grupos compartidos.
 - Invitación de integrantes.
@@ -143,7 +143,7 @@ No afirmes que un comportamiento fue probado si no existe evidencia de ejecució
 - Sé directo y preciso.
 - Evita explicaciones innecesariamente extensas.
 - No asumas conocimientos que el usuario no haya demostrado.
-- Utiliza ejemplos relacionados con Mitad.
+- Utiliza ejemplos relacionados con Rumi.
 - Explica el razonamiento detrás de decisiones importantes.
 - No estés de acuerdo automáticamente con todas las propuestas.
 - Señala errores conceptuales y alternativas mejores cuando existan.
@@ -252,7 +252,7 @@ Explica los conceptos nuevos cuando aparezcan durante la implementación.
 
 ## 8. Reglas de datos financieros
 
-Los cálculos monetarios constituyen una parte crítica de Mitad.
+Los cálculos monetarios constituyen una parte crítica de Rumi.
 
 ### Reglas obligatorias
 
@@ -304,7 +304,7 @@ Antes de proponer una operación que afecte información compartida, explica los
 
 ## 10. Reglas para Hoy Te Toca
 
-El módulo premium comparte usuarios y hogares con Mitad.
+El módulo premium comparte usuarios y hogares con Rumi.
 
 Debe contemplar:
 
@@ -396,7 +396,7 @@ Cuando corresponda, enseñar al usuario a revisar los diffs y comprender los cam
 
 ## 14. Alcance del proyecto
 
-### Fase 1 — Mitad gratuito
+### Fase 1 — Rumi gratuito
 
 Autenticación, grupos, invitaciones, gastos, divisiones, balances, liquidaciones e historial.
 
@@ -459,4 +459,4 @@ No introducir complejidad sin necesidad.
 
 No modificar el repositorio sin autorización.
 
-**El objetivo es construir Mitad como un producto real mientras el desarrollador aprende a construirlo de forma independiente.**
+**El objetivo es construir Rumi como un producto real mientras el desarrollador aprende a construirlo de forma independiente.**
