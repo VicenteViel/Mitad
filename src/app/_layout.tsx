@@ -19,15 +19,17 @@ export default function RootLayout() {
 
   if (cargando) return null;
 
-    return (
+  return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Protected guard={!sesion}>
             <Stack.Screen name="ingresar" />
+            
           </Stack.Protected>
           <Stack.Protected guard={!!sesion}>
             <Stack.Screen name="index" />
+            <Stack.Screen name="crear-grupo" />
           </Stack.Protected>
         </Stack>
       </ThemeProvider>
