@@ -1,4 +1,4 @@
-import { useTheme } from 'expo-router';
+import { router, useTheme } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput } from 'react-native';
 
@@ -119,6 +119,12 @@ export default function IngresarScreen() {
           accessibilityRole="button"
         >
           <Text style={[styles.link, { color: colors.primary }]}>Cambiar correo</Text>
+        </Pressable>
+      )}
+
+      {paso === 'correo' && router.canGoBack() && (
+        <Pressable onPress={() => router.back()} accessibilityRole="button">
+          <Text style={[styles.link, { color: colors.primary }]}>Volver</Text>
         </Pressable>
       )}
     </PantallaFormulario>
