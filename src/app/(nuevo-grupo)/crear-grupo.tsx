@@ -1,7 +1,8 @@
 import { router, useTheme } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput } from 'react-native';
 
+import { PantallaFormulario } from '@/components/pantalla-formulario';
 import { useBorradorGrupo } from '@/features/grupos/borrador-grupo-context';
 import { SelectorAvatar } from '@/features/grupos/components/selector-avatar';
 import {
@@ -9,6 +10,7 @@ import {
   validarNuevoGrupo,
   type ErroresNuevoGrupo,
 } from '@/features/grupos/validar-nuevo-grupo';
+import { PALETA } from '@/theme/tema';
 
 export default function CrearGrupoScreen() {
   const { colors } = useTheme();
@@ -31,8 +33,8 @@ export default function CrearGrupoScreen() {
   const inputStyle = [styles.input, { color: colors.text, borderColor: colors.border }];
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Text style={[styles.title, { color: colors.text }]}>Crear grupo</Text>
+    <PantallaFormulario>
+      <Text style={[styles.title, { color: colors.primary }]}>Crear grupo</Text>
 
       <Text style={[styles.label, { color: colors.text }]}>Nombre del grupo</Text>
       <TextInput
@@ -40,7 +42,7 @@ export default function CrearGrupoScreen() {
         value={borrador.nombre}
         onChangeText={(nombre) => actualizarGrupo({ nombre })}
         placeholder="Depto Ñuñoa"
-        placeholderTextColor="#888"
+        placeholderTextColor={PALETA.textoSuave}
         maxLength={LIMITES.nombre}
         accessibilityLabel="Nombre del grupo"
       />
@@ -52,7 +54,7 @@ export default function CrearGrupoScreen() {
         value={borrador.descripcion}
         onChangeText={(descripcion) => actualizarGrupo({ descripcion })}
         placeholder="Gastos del depto"
-        placeholderTextColor="#888"
+        placeholderTextColor={PALETA.textoSuave}
         maxLength={LIMITES.descripcion}
         accessibilityLabel="Descripción del grupo"
       />
@@ -64,7 +66,7 @@ export default function CrearGrupoScreen() {
         value={borrador.yo.nombre}
         onChangeText={(nombre) => actualizarYo({ nombre })}
         placeholder="Vicente"
-        placeholderTextColor="#888"
+        placeholderTextColor={PALETA.textoSuave}
         maxLength={LIMITES.nombreIntegrante}
         autoComplete="name"
         accessibilityLabel="Tu nombre en el grupo"
@@ -81,16 +83,15 @@ export default function CrearGrupoScreen() {
       >
         <Text style={styles.buttonText}>Continuar</Text>
       </Pressable>
-    </View>
+    </PantallaFormulario>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24, gap: 8 },
   title: { fontSize: 32, fontWeight: '700', textAlign: 'center', marginBottom: 16 },
   label: { fontSize: 16, marginTop: 8 },
   input: { borderWidth: 1, borderRadius: 12, padding: 14, fontSize: 18 },
-  error: { color: '#D93025', fontSize: 14 },
+  error: { color: PALETA.error, fontSize: 14 },
   button: { borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 16 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 });

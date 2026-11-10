@@ -11,7 +11,7 @@ import Animated, {
 
 import { COLORES, colorPorDefecto, type Avatar } from '../apariencia';
 
-const GRIS = '#9AA0A6';
+const GRIS = '#A99BC2';
 const BLANCO = '#FFFFFF';
 const TRANSPARENTE = 'rgba(0, 0, 0, 0)';
 

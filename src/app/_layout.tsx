@@ -1,16 +1,15 @@
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import { useColorScheme } from 'react-native';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { useSesion } from '@/features/auth/use-sesion';
+import { temaRumi } from '@/theme/tema';
 
 SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
   const { sesion, cargando } = useSesion();
 
   useEffect(() => {
@@ -21,7 +20,7 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <ThemeProvider value={temaRumi}>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Protected guard={!sesion}>
             <Stack.Screen name="ingresar" />

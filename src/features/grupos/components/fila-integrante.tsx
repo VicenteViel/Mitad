@@ -1,6 +1,8 @@
 import { useTheme } from 'expo-router';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { PALETA } from '@/theme/tema';
+
 import type { IntegranteBorrador } from '../borrador-grupo';
 import { LIMITES } from '../validar-nuevo-grupo';
 import { SelectorAvatar } from './selector-avatar';
@@ -19,7 +21,7 @@ export function FilaIntegrante({ integrante, etiqueta, error, onChange, onQuitar
   const { colors } = useTheme();
 
   return (
-    <View style={[styles.tarjeta, { borderColor: colors.border }]}>
+    <View style={styles.tarjeta}>
       <View style={styles.encabezado}>
         <Text style={[styles.etiqueta, { color: colors.text }]}>{etiqueta}</Text>
         {onQuitar && (
@@ -39,7 +41,7 @@ export function FilaIntegrante({ integrante, etiqueta, error, onChange, onQuitar
         value={integrante.nombre}
         onChangeText={(nombre) => onChange({ nombre })}
         placeholder="Nombre"
-        placeholderTextColor="#888"
+        placeholderTextColor={PALETA.textoSuave}
         maxLength={LIMITES.nombreIntegrante}
         accessibilityLabel={`Nombre, ${etiqueta}`}
       />
@@ -54,11 +56,11 @@ export function FilaIntegrante({ integrante, etiqueta, error, onChange, onQuitar
 }
 
 const styles = StyleSheet.create({
-  tarjeta: { borderWidth: 1, borderRadius: 16, padding: 12, gap: 8 },
+  tarjeta: { borderRadius: 16, padding: 12, gap: 8, backgroundColor: PALETA.lilaClaro },
   encabezado: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   etiqueta: { fontSize: 14, fontWeight: '600', opacity: 0.7 },
-  quitar: { color: '#D93025', fontSize: 15 },
-  input: { borderWidth: 1, borderRadius: 12, padding: 12, fontSize: 17 },
-  error: { color: '#D93025', fontSize: 14 },
+  quitar: { color: PALETA.error, fontSize: 15 },
+  input: { borderWidth: 1, borderRadius: 12, padding: 12, fontSize: 17, backgroundColor: PALETA.blanco },
+  error: { color: PALETA.error, fontSize: 14 },
   apariencia: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
 });
