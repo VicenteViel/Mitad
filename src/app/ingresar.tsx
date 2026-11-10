@@ -1,8 +1,10 @@
 import { useTheme } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput } from 'react-native';
 
+import { PantallaFormulario } from '@/components/pantalla-formulario';
 import { supabase } from '@/lib/supabase';
+import { PALETA } from '@/theme/tema';
 
 const CORREO_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -53,8 +55,8 @@ export default function IngresarScreen() {
   const inputStyle = [styles.input, { color: colors.text, borderColor: colors.border }];
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Text style={[styles.title, { color: colors.text }]}>Rumi</Text>
+    <PantallaFormulario>
+      <Text style={[styles.title, { color: colors.primary }]}>Rumi</Text>
 
       {paso === 'correo' ? (
         <>
@@ -64,7 +66,7 @@ export default function IngresarScreen() {
             value={correo}
             onChangeText={setCorreo}
             placeholder="nombre@correo.com"
-            placeholderTextColor="#888"
+            placeholderTextColor={PALETA.textoSuave}
             keyboardType="email-address"
             autoCapitalize="none"
             autoComplete="email"
@@ -82,7 +84,7 @@ export default function IngresarScreen() {
             value={codigo}
             onChangeText={setCodigo}
             placeholder="123456"
-            placeholderTextColor="#888"
+            placeholderTextColor={PALETA.textoSuave}
             keyboardType="number-pad"
             maxLength={6}
             autoComplete="one-time-code"
@@ -119,16 +121,15 @@ export default function IngresarScreen() {
           <Text style={[styles.link, { color: colors.primary }]}>Cambiar correo</Text>
         </Pressable>
       )}
-    </View>
+    </PantallaFormulario>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24, gap: 12 },
-  title: { fontSize: 40, fontWeight: '700', textAlign: 'center', marginBottom: 24 },
+  title: { fontSize: 40, fontWeight: '700', textAlign: 'center', marginBottom: 16 },
   label: { fontSize: 16 },
   input: { borderWidth: 1, borderRadius: 12, padding: 14, fontSize: 18 },
-  error: { color: '#D93025', fontSize: 14 },
+  error: { color: PALETA.error, fontSize: 14 },
   button: { borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 8 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   link: { textAlign: 'center', fontSize: 15, marginTop: 8 },

@@ -1,14 +1,8 @@
 import { router, useTheme } from 'expo-router';
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-} from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput } from 'react-native';
 
+import { PantallaFormulario } from '@/components/pantalla-formulario';
 import { useBorradorGrupo } from '@/features/grupos/borrador-grupo-context';
 import { FilaIntegrante } from '@/features/grupos/components/fila-integrante';
 import { useIniciarGrupo } from '@/features/grupos/use-iniciar-grupo';
@@ -23,6 +17,7 @@ import {
   validarNuevoGrupo,
   type ErroresNuevoGrupo,
 } from '@/features/grupos/validar-nuevo-grupo';
+import { PALETA } from '@/theme/tema';
 
 export default function ResumenGrupoScreen() {
   const { colors } = useTheme();
@@ -59,13 +54,8 @@ export default function ResumenGrupoScreen() {
   const total = borrador.integrantes.length + 1;
 
   return (
-    <ScrollView
-      style={{ backgroundColor: colors.background }}
-      contentContainerStyle={styles.container}
-      keyboardShouldPersistTaps="handled"
-      automaticallyAdjustKeyboardInsets
-    >
-      <Text style={[styles.title, { color: colors.text }]}>Resumen</Text>
+    <PantallaFormulario>
+      <Text style={[styles.title, { color: colors.primary }]}>Resumen</Text>
       <Text style={[styles.subtitle, { color: colors.text }]}>
         Revisa y corrige lo que necesites antes de iniciar el grupo.
       </Text>
@@ -76,7 +66,7 @@ export default function ResumenGrupoScreen() {
         value={borrador.nombre}
         onChangeText={(nombre) => actualizarGrupo({ nombre })}
         placeholder="Nombre del grupo"
-        placeholderTextColor="#888"
+        placeholderTextColor={PALETA.textoSuave}
         maxLength={LIMITES.nombre}
         accessibilityLabel="Nombre del grupo"
       />
@@ -86,7 +76,7 @@ export default function ResumenGrupoScreen() {
         value={borrador.descripcion}
         onChangeText={(descripcion) => actualizarGrupo({ descripcion })}
         placeholder="Descripción (opcional)"
-        placeholderTextColor="#888"
+        placeholderTextColor={PALETA.textoSuave}
         maxLength={LIMITES.descripcion}
         accessibilityLabel="Descripción del grupo"
       />
@@ -133,17 +123,16 @@ export default function ResumenGrupoScreen() {
           <Text style={styles.buttonText}>Iniciar grupo</Text>
         )}
       </Pressable>
-    </ScrollView>
+    </PantallaFormulario>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 24, paddingTop: 72, gap: 12 },
   title: { fontSize: 28, fontWeight: '700', textAlign: 'center' },
   subtitle: { fontSize: 15, opacity: 0.6, textAlign: 'center' },
   seccion: { fontSize: 18, fontWeight: '700', marginTop: 12 },
   input: { borderWidth: 1, borderRadius: 12, padding: 14, fontSize: 18 },
-  error: { color: '#D93025', fontSize: 14 },
+  error: { color: PALETA.error, fontSize: 14 },
   agregar: { paddingVertical: 8 },
   link: { textAlign: 'center', fontSize: 16 },
   button: { borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 8 },
