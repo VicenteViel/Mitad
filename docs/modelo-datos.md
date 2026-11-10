@@ -52,7 +52,7 @@ Descartada al implementar (decisión 42): el nombre vive en `integrantes`, uno p
 - Un usuario puede estar vinculado a un solo integrante por grupo.
 - `avatar` y `color` son apariencia, no datos personales: el integrante activo los cambia desde su perfil; los de un pendiente los cambia un admin.
 - Un pendiente nunca es admin.
-- El nombre se guarda aquí y no en el perfil: se conserva si la persona sale, y anonimizar es cambiar solo este campo a "Ex-integrante".
+- El nombre se guarda aquí y no en el perfil: se conserva si la persona sale, y anonimizar es cambiar solo este campo a "Ex-rumi".
 - Re-vincular es cambiar `usuario_id`.
 - Solo un integrante con usuario registrado puede ser admin.
 
@@ -179,7 +179,7 @@ Gastos y liquidaciones del grupo, del más reciente al más antiguo (por `fecha`
 ## Salir del grupo y eliminar la cuenta
 
 - **Salir:** el integrante queda sin usuario, se marca `salio_en` y pierde el rol de admin. Si era el último admin, pasa a serlo el integrante registrado más antiguo (si no queda ninguno, el grupo queda sin admin hasta que alguien agregue su correo; regla 41). Si era el último integrante activo, el grupo y sus datos se borran, aunque queden pendientes.
-- **Eliminar la cuenta:** lo mismo en cada grupo del usuario; además el nombre pasa a "Ex-integrante" y se borra el usuario de Supabase Auth (función `anonimizar_usuario`, solo ejecutable por la Edge Function `eliminar-cuenta`).
+- **Eliminar la cuenta:** lo mismo en cada grupo del usuario; además el nombre pasa a "Ex-rumi" y se borra el usuario de Supabase Auth (función `anonimizar_usuario`, solo ejecutable por la Edge Function `eliminar-cuenta`).
 
 ## Seguridad
 
@@ -221,6 +221,7 @@ Gastos y liquidaciones del grupo, del más reciente al más antiguo (por `fecha`
 | Invitación usada dos veces al mismo tiempo | La función bloquea la invitación al canjearla; solo un canje gana |
 | Acceso a grupos ajenos | RLS en lectura y verificación de pertenencia en cada función |
 | Escalamiento de privilegios | El rol solo cambia mediante una función que exige ser admin |
+| Dos admins saliendo o cambiando roles a la vez | Cada cambio de membresía o de rol bloquea la fila del grupo: se aplican de a uno y nunca queda el grupo sin admin por una carrera |
 | Errores de cálculo | Enteros, cálculo en un solo lugar e invariantes cubiertos por tests |
 
 ## Fuera de la Etapa 1

@@ -20,7 +20,7 @@ Registro de las decisiones de producto y arquitectura. Si una decisión cambia, 
    - *Pendiente:* sin usuario vinculado y sin haber salido del grupo. Lo gestiona un admin.
 4. **El dinero pertenece al integrante, no a la cuenta.** Gastos, participaciones y liquidaciones apuntan al integrante del grupo. Salir del grupo, eliminar la cuenta o perder el teléfono no borra saldos ni historial.
 5. **Se puede salir de un grupo con saldo pendiente.** Antes de confirmar, la app muestra el monto pendiente. Quien sale pierde el acceso al grupo; su saldo sigue visible para el resto.
-6. **Eliminar la cuenta anonimiza.** El integrante queda como "Ex-integrante" y su historial se conserva.
+6. **Eliminar la cuenta anonimiza.** El integrante queda como "Ex-rumi" y su historial se conserva.
 
 ### Invitaciones
 
@@ -94,7 +94,7 @@ Detalle de tablas, cálculos y funciones en [modelo-datos.md](modelo-datos.md).
 43. **Quién registra un pago entre rumis:** cualquiera de las dos partes. Si una parte es pendiente, solo un admin. Si una parte ya salió del grupo, también un admin que no sea parte. La app sugiere el monto de la deuda.
 44. **Editar o eliminar gastos y pagos: solo admins.** Al editar un gasto, los participantes se eligen entre los rumis actuales (activos y pendientes); quienes ya salieron no se pueden volver a agregar.
 45. **Mi cuenta:** correo (agregar o confirmar), cerrar sesión y eliminar cuenta. Si la cuenta no tiene correo confirmado, cerrar sesión advierte que no podrá volver a entrar sin una invitación nueva.
-46. **Eliminar la cuenta** saca al usuario de todos sus grupos (con sucesión de admin), cambia su nombre a "Ex-integrante" y borra el usuario de Supabase Auth. Los gastos, pagos y saldos se conservan para el resto. Lo hace una Edge Function (`eliminar-cuenta`).
+46. **Eliminar la cuenta** saca al usuario de todos sus grupos (con sucesión de admin), cambia su nombre a "Ex-rumi" y borra el usuario de Supabase Auth. Los gastos, pagos y saldos se conservan para el resto. Lo hace una Edge Function (`eliminar-cuenta`).
 47. **CI en GitHub Actions:** cada PR corre lint, TypeScript y tests (`npm run verificar` hace lo mismo en local).
 
 ---
