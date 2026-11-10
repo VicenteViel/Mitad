@@ -179,7 +179,7 @@ Positivo: le deben. Negativo: debe.
 
 ### Historial
 
-Gastos y liquidaciones del grupo, del más reciente al más antiguo (por `fecha` y luego por hora de creación). Lo borrado aparece como "eliminado" y no cuenta en los saldos.
+Gastos y liquidaciones del grupo, del más reciente al más antiguo (por `fecha` y luego por hora de creación). Lo borrado aparece como "eliminado" y no cuenta en los saldos. Pantalla propia con filtros, agrupado por día y con el efecto de cada movimiento en tu saldo (decisión 54).
 
 ## Salir del grupo y eliminar la cuenta
 

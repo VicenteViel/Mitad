@@ -1,5 +1,6 @@
 import {
   celdasDelMes,
+  fechaConDia,
   fechaCorta,
   fechaLarga,
   moverMes,
@@ -40,5 +41,15 @@ describe('fechas', () => {
     expect(fechaCorta('2026-11-05', '2026-11-10')).toBe('5 nov');
     expect(fechaCorta('2027-01-05', '2026-11-10')).toBe('5 ene 2027');
     expect(fechaLarga('2026-11-05', '2026-11-10')).toBe('5 de noviembre');
+  });
+});
+
+describe('fechaConDia', () => {
+  it('dice Hoy, Ayer o el día de la semana', () => {
+    expect(fechaConDia('2026-11-10', '2026-11-10')).toBe('Hoy');
+    expect(fechaConDia('2026-11-09', '2026-11-10')).toBe('Ayer');
+    expect(fechaConDia('2026-11-02', '2026-11-10')).toBe('lunes 2 de noviembre');
+    expect(fechaConDia('2026-12-31', '2027-01-01')).toBe('Ayer');
+    expect(fechaConDia('2025-12-25', '2026-11-10')).toBe('jueves 25 de diciembre de 2025');
   });
 });

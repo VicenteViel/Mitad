@@ -17,6 +17,10 @@ function gasto(datos: Partial<GastoHistorial> & { id: string }): GastoHistorial 
     pagadoPorNombre: null,
     fechaLimite: '2026-11-05',
     mensual: false,
+    creadoPorId: 'a',
+    editadoPorId: null,
+    editadoEn: null,
+    eliminadoPorId: null,
     participaciones: [],
     ...datos,
   };

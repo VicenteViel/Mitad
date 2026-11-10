@@ -27,6 +27,9 @@ import { usePagos, useRumisSaldo, useSaldos } from '@/features/saldos/use-saldos
 import { useVencidos } from '@/features/saldos/use-vencidos';
 import { PALETA } from '@/theme/tema';
 
+// En la pantalla del grupo se ven los últimos; el resto, en Historial.
+const MOVIMIENTOS_RECIENTES = 5;
+
 export default function GrupoScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const grupoId = id ?? '';
@@ -59,6 +62,10 @@ export default function GrupoScreen() {
         ? { id: grupoId, de: deuda.deudor, a: deuda.acreedor, monto: String(deuda.monto) }
         : { id: grupoId },
     });
+  }
+
+  function verHistorial() {
+    router.push({ pathname: '/grupo/[id]/historial', params: { id: grupoId } });
   }
 
   function recargarTodo() {
@@ -171,7 +178,14 @@ export default function GrupoScreen() {
           )}
 
           {/* Historial: gastos y pagos */}
-          <Text style={styles.seccion}>Movimientos</Text>
+          <View style={styles.seccionFila}>
+            <Text style={styles.seccion}>Últimos movimientos</Text>
+            {movimientos && movimientos.length > 0 && (
+              <Pressable onPress={verHistorial} accessibilityRole="button" hitSlop={8}>
+                <Text style={styles.verTodo}>Ver todo ›</Text>
+              </Pressable>
+            )}
+          </View>
           {(gastos.isPending || pagos.isPending) && <ActivityIndicator color={PALETA.morado} />}
           {(gastos.isError || pagos.isError) && (
             <Pressable onPress={recargarTodo} accessibilityRole="button" style={styles.error}>
@@ -189,7 +203,7 @@ export default function GrupoScreen() {
           )}
           {movimientos && movimientos.length > 0 && (
             <View style={styles.tarjeta}>
-              {movimientos.map((m, i) => (
+              {movimientos.slice(0, MOVIMIENTOS_RECIENTES).map((m, i) => (
                 <View key={`${m.tipo}-${m.id}`}>
                   {i > 0 && <View style={styles.separador} />}
                   {m.tipo === 'gasto' ? (
@@ -210,6 +224,17 @@ export default function GrupoScreen() {
                 </View>
               ))}
             </View>
+          )}
+          {movimientos && movimientos.length > 0 && (
+            <Pressable
+              onPress={verHistorial}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.botonHistorial, pressed && styles.presionado]}
+            >
+              <Text style={styles.botonHistorialTexto}>
+                🧾 Ver historial completo ({movimientos.length})
+              </Text>
+            </Pressable>
           )}
 
           {/* Rumis (integrantes) */}
@@ -291,6 +316,17 @@ const styles = StyleSheet.create({
   presionado: { opacity: 0.85 },
 
   seccion: { fontSize: 20, fontWeight: '800', color: PALETA.moradoOscuro, marginTop: 8 },
+  seccionFila: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  verTodo: { color: PALETA.morado, fontSize: 15, fontWeight: '700', marginTop: 8 },
+  botonHistorial: {
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: PALETA.violeta,
+    backgroundColor: PALETA.blanco,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  botonHistorialTexto: { color: PALETA.morado, fontSize: 15, fontWeight: '800' },
   tarjeta: {
     backgroundColor: PALETA.blanco,
     borderRadius: 20,

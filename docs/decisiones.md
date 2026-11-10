@@ -108,6 +108,12 @@ Detalle de tablas, cálculos y funciones en [modelo-datos.md](modelo-datos.md).
 52. **Aviso dentro de la app**, sin notificaciones push (llegan con la Etapa 2): un bloque rojo en la pantalla del grupo, con "Pagar" (abre Registrar pago con el monto) o "Ya pagué" (abre el gasto para marcar la parte), y una etiqueta "⏰ N pagos vencidos" en la tarjeta del grupo en Inicio.
 53. **Sin dependencia nueva para elegir fechas:** un calendario propio, igual en iOS y Android.
 
+### Historial (2026-11-10)
+
+54. **Historial completo en su propia pantalla.** La pantalla del grupo muestra solo los últimos 5 movimientos y el botón "Ver historial completo". El historial se agrupa por día y se filtra por Todos, Gastos, Pagos o Míos. Cada movimiento muestra la hora exacta, quién lo registró, quién pagó, cuánto cambió **tu saldo** ("+" a tu favor, "−" lo que pasas a deber) y sus etiquetas (eliminado, editado, mensual, por cubrir, vence). Al tocarlo se despliega: la división por rumi, las ediciones con hora, quién lo eliminó y un **código** de 6 caracteres para nombrar el movimiento sin confusiones. La suma de los efectos de todos los movimientos es igual a tu saldo (cubierto por un test).
+
+
+
 ---
 
 ## Pendiente antes de la beta (no bloquea empezar)
