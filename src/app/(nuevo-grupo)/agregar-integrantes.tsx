@@ -41,10 +41,10 @@ export default function AgregarIntegrantesScreen() {
               style={[styles.input, { color: colors.text, borderColor: colors.border }]}
               value={integrante.nombre}
               onChangeText={(nombre) => actualizarIntegrante(i, { nombre })}
-              placeholder={`Integrante ${i + 2}`}
+              placeholder={`Rumi ${i + 2}`}
               placeholderTextColor={PALETA.textoSuave}
               maxLength={LIMITES.nombreIntegrante}
-              accessibilityLabel={`Nombre del integrante ${i + 2}`}
+              accessibilityLabel={`Nombre del rumi ${i + 2}`}
             />
             <SelectorAvatar
               compacto

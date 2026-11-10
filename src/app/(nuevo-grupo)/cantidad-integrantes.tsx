@@ -29,7 +29,7 @@ export default function CantidadIntegrantesScreen() {
 
   return (
     <PantallaFormulario>
-      <Text style={[styles.title, { color: colors.primary }]}>¿Cuántos integrantes son?</Text>
+      <Text style={[styles.title, { color: colors.primary }]}>¿Cuántos rumis son?</Text>
       <Text style={[styles.subtitle, { color: colors.text }]}>Contándote a ti</Text>
 
       <View style={styles.contador}>
@@ -46,7 +46,7 @@ export default function CantidadIntegrantesScreen() {
         <Text
           style={[styles.numero, { color: colors.text }]}
           accessibilityLiveRegion="polite"
-          accessibilityLabel={`${total} integrantes`}
+          accessibilityLabel={`${total} rumis`}
         >
           {total}
         </Text>

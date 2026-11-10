@@ -93,8 +93,8 @@ export default function GrupoScreen() {
             </View>
           </View>
 
-          {/* Integrantes */}
-          <Text style={styles.seccion}>Integrantes</Text>
+          {/* Rumis (integrantes) */}
+          <Text style={styles.seccion}>Rumis</Text>
           <View style={styles.tarjeta}>
             {grupo.integrantes.map((integrante, i) => (
               <View key={integrante.id}>

@@ -13,7 +13,7 @@ export function validarIntegrantes(integrantes: { nombre: string }[]): ErroresIn
   const errores: ErroresIntegrantes = { porFila: {} };
 
   if (integrantes.length > MAX_INTEGRANTES_POR_VEZ) {
-    errores.general = `Máximo ${MAX_INTEGRANTES_POR_VEZ} integrantes a la vez.`;
+    errores.general = `Máximo ${MAX_INTEGRANTES_POR_VEZ} rumis a la vez.`;
   }
 
   integrantes.forEach((integrante, i) => {

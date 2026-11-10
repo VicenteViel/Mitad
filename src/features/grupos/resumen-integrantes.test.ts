@@ -31,7 +31,7 @@ describe('etiquetasIntegrante', () => {
 
 describe('contarIntegrantes', () => {
   it('usa singular con uno solo', () => {
-    expect(contarIntegrantes([integrante({})])).toBe('1 integrante');
+    expect(contarIntegrantes([integrante({})])).toBe('1 rumi');
   });
 
   it('agrega los pendientes cuando hay', () => {
@@ -40,6 +40,6 @@ describe('contarIntegrantes', () => {
       integrante({ id: 'i2', usuarioId: null }),
       integrante({ id: 'i3', usuarioId: null }),
     ];
-    expect(contarIntegrantes(lista)).toBe('3 integrantes · 2 pendientes');
+    expect(contarIntegrantes(lista)).toBe('3 rumis · 2 pendientes');
   });
 });
