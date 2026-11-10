@@ -35,3 +35,31 @@ export async function iniciarGrupo(borrador: BorradorGrupo): Promise<string> {
 
   return data;
 }
+
+export type GrupoResumen = {
+  id: string;
+  nombre: string;
+  descripcion: string | null;
+  cantidadIntegrantes: number;
+};
+
+// Grupos donde participo, del más nuevo al más antiguo. RLS ya filtra: solo
+// llegan los grupos donde soy integrante. Cuenta activos y pendientes.
+export async function obtenerMisGrupos(): Promise<GrupoResumen[]> {
+  const { data, error } = await supabase
+    .from('grupos')
+    .select('id, nombre, descripcion, integrantes(count)')
+    .is('integrantes.salio_en', null)
+    .order('creado_en', { ascending: false });
+
+  if (error) {
+    throw new Error(`Error al cargar los grupos: ${error.message}`);
+  }
+
+  return data.map((g) => ({
+    id: g.id,
+    nombre: g.nombre,
+    descripcion: g.descripcion,
+    cantidadIntegrantes: g.integrantes[0]?.count ?? 0,
+  }));
+}
