@@ -17,6 +17,7 @@ import {
   validarNuevoGrupo,
   type ErroresNuevoGrupo,
 } from '@/features/grupos/validar-nuevo-grupo';
+import { SIMULAR_GUARDADO } from '@/lib/desarrollo';
 import { PALETA } from '@/theme/tema';
 
 export default function ResumenGrupoScreen() {
@@ -59,6 +60,9 @@ export default function ResumenGrupoScreen() {
       <Text style={[styles.subtitle, { color: colors.text }]}>
         Revisa y corrige lo que necesites antes de iniciar el grupo.
       </Text>
+      {SIMULAR_GUARDADO && (
+        <Text style={styles.modoPrueba}>Modo prueba: el grupo no se guardará en Supabase</Text>
+      )}
 
       <Text style={[styles.seccion, { color: colors.text }]}>Grupo</Text>
       <TextInput
@@ -128,6 +132,16 @@ export default function ResumenGrupoScreen() {
 }
 
 const styles = StyleSheet.create({
+  modoPrueba: {
+    backgroundColor: PALETA.lilaClaro,
+    color: PALETA.morado,
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+    borderRadius: 8,
+    padding: 8,
+    overflow: 'hidden',
+  },
   title: { fontSize: 28, fontWeight: '700', textAlign: 'center' },
   subtitle: { fontSize: 15, opacity: 0.6, textAlign: 'center' },
   seccion: { fontSize: 18, fontWeight: '700', marginTop: 12 },

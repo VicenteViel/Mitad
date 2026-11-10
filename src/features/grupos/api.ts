@@ -1,4 +1,5 @@
 import type { Json } from '@/lib/database.types';
+import { esperar, SIMULAR_GUARDADO } from '@/lib/desarrollo';
 import { supabase } from '@/lib/supabase';
 
 import type { BorradorGrupo } from './borrador-grupo';
@@ -6,6 +7,13 @@ import type { BorradorGrupo } from './borrador-grupo';
 // Crea el grupo completo en una sola transacción: el grupo, quien lo crea
 // (admin) y los integrantes pendientes. Devuelve el id del grupo.
 export async function iniciarGrupo(borrador: BorradorGrupo): Promise<string> {
+  if (SIMULAR_GUARDADO) {
+    // Modo prueba: no escribe en Supabase. La pausa deja ver el spinner.
+    console.log('[modo prueba] iniciar_grupo simulado:', borrador);
+    await esperar(800);
+    return 'grupo-de-prueba';
+  }
+
   const integrantes: Json = borrador.integrantes.map((i) => ({
     nombre: i.nombre.trim(),
     avatar: i.avatar,
