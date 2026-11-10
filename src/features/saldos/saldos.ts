@@ -3,7 +3,8 @@
 // Todo en pesos enteros: sumas y restas de enteros, sin redondeos.
 
 export type GastoParaSaldo = {
-  pagadoPor: string;
+  // null: gasto por cubrir. Cada uno paga su parte por fuera: no hay deudas entre rumis.
+  pagadoPor: string | null;
   eliminado: boolean;
   participaciones: { integranteId: string; monto: number }[];
 };
@@ -45,7 +46,7 @@ export function calcularSaldos(gastos: GastoParaSaldo[], pagos: PagoParaSaldo[])
   };
 
   for (const gasto of gastos) {
-    if (gasto.eliminado) continue;
+    if (gasto.eliminado || gasto.pagadoPor === null) continue;
     for (const p of gasto.participaciones) {
       sumarNeto(gasto.pagadoPor, p.monto);
       sumarNeto(p.integranteId, -p.monto);

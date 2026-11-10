@@ -45,3 +45,12 @@ describe('dividirEquitativo', () => {
     expect(() => dividirEquitativo(2, ['ana', 'diego', 'camila'], 'ana')).toThrow();
   });
 });
+describe('dividirEquitativo sin pagador (gasto por cubrir)', () => {
+  it('reparte el resto de a 1 peso por orden de llegada', () => {
+    expect(dividirEquitativo(10, ['a', 'b', 'c'], null)).toEqual([
+      { integranteId: 'a', monto: 4 },
+      { integranteId: 'b', monto: 3 },
+      { integranteId: 'c', monto: 3 },
+    ]);
+  });
+});

@@ -124,3 +124,20 @@ describe('deudasDe', () => {
     expect(deudasDe(saldos, 'y')).toEqual([{ deudor: 'y', acreedor: 'x', monto: 100 }]);
   });
 });
+
+describe('gastos por cubrir', () => {
+  it('no crean deudas entre rumis', () => {
+    const porCubrir: GastoParaSaldo = {
+      pagadoPor: null,
+      eliminado: false,
+      participaciones: [
+        { integranteId: 'a', monto: 250000 },
+        { integranteId: 'b', monto: 250000 },
+      ],
+    };
+    const { netos, deudas } = calcularSaldos([porCubrir, gasto('a', { a: 500, b: 500 })], []);
+    expect(deudas).toEqual([{ deudor: 'b', acreedor: 'a', monto: 500 }]);
+    expect(netos.get('a')).toBe(500);
+    verificarInvariantes([porCubrir], []);
+  });
+});

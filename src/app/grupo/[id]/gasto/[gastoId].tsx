@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -14,7 +15,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSesion } from '@/features/auth/use-sesion';
 import { hoyLocal } from '@/features/gastos/api';
 import { SeccionEvidencia } from '@/features/gastos/components/seccion-evidencia';
+import { fechaLarga } from '@/features/gastos/fechas';
 import { etiquetaCategoria, iconoCategoria, textoFecha } from '@/features/gastos/historial';
+import { useMarcarPartePagada } from '@/features/gastos/use-registrar-gasto';
 import { AccionesAdmin } from '@/components/acciones-admin';
 import {
   useDetalleGasto,
@@ -36,9 +39,13 @@ export default function DetalleGastoScreen() {
   const evidencias = useEvidencias({ tipo: 'gasto', id: gastoId ?? '' });
   const eliminar = useEliminarGasto(id ?? '');
 
+  const marcar = useMarcarPartePagada(id ?? '');
+
   const yo = grupo?.integrantes.find((i) => i.usuarioId === sesion?.user.id);
   const soyAdmin = yo?.rol === 'admin';
   const hoy = hoyLocal();
+  const porCubrir = gasto?.pagadoPorId === null;
+  const pagadas = gasto?.participaciones.filter((p) => p.pagada).length ?? 0;
 
   return (
     <ScrollView
@@ -89,15 +96,48 @@ export default function DetalleGastoScreen() {
             <Text style={styles.heroDetalle}>
               {etiquetaCategoria(gasto.categoria)} · {textoFecha(gasto.fecha, hoy)}
             </Text>
+            {(gasto.fechaLimite || gasto.mensual) && !gasto.eliminado && (
+              <View style={styles.insignias}>
+                {gasto.fechaLimite && (
+                  <Text style={[styles.insignia, gasto.fechaLimite < hoy && styles.insigniaVencida]}>
+                    {gasto.fechaLimite < hoy ? '⚠ Venció' : '📅 Vence'} el{' '}
+                    {fechaLarga(gasto.fechaLimite, hoy)}
+                  </Text>
+                )}
+                {gasto.mensual && <Text style={styles.insignia}>🔁 Mensual</Text>}
+              </View>
+            )}
             {gasto.eliminado && <Text style={styles.eliminado}>Este gasto fue eliminado</Text>}
           </View>
 
           {/* Quién pagó */}
           <View style={styles.tarjeta}>
-            <Text style={styles.etiqueta}>Pagó</Text>
-            <Text style={styles.valor}>
-              {gasto.pagadoPorId === yo?.id ? `${gasto.pagadoPorNombre} (tú)` : gasto.pagadoPorNombre}
-            </Text>
+            {porCubrir ? (
+              <>
+                <Text style={styles.etiqueta}>Por cubrir</Text>
+                <Text style={styles.valor}>
+                  {pagadas} de {gasto.participaciones.length} partes pagadas
+                </Text>
+                <View style={styles.barra}>
+                  <View
+                    style={[
+                      styles.barraRelleno,
+                      { width: `${(pagadas / Math.max(gasto.participaciones.length, 1)) * 100}%` },
+                    ]}
+                  />
+                </View>
+                <Text style={styles.ayuda}>
+                  Cada rumi paga su parte por fuera y la marca como pagada aquí.
+                </Text>
+              </>
+            ) : (
+              <>
+                <Text style={styles.etiqueta}>Pagó</Text>
+                <Text style={styles.valor}>
+                  {gasto.pagadoPorId === yo?.id ? `${gasto.pagadoPorNombre} (tú)` : gasto.pagadoPorNombre}
+                </Text>
+              </>
+            )}
           </View>
 
           {/* División */}
@@ -105,18 +145,67 @@ export default function DetalleGastoScreen() {
             <Text style={styles.etiqueta}>
               División {gasto.tipoDivision === 'equitativa' ? 'en partes iguales' : 'personalizada'}
             </Text>
-            {gasto.participaciones.map((p, i) => (
-              <View key={p.integranteId}>
-                {i > 0 && <View style={styles.separador} />}
-                <View style={styles.filaParte}>
-                  <Text style={styles.parteNombre}>
-                    {p.nombre}
-                    {p.integranteId === yo?.id && <Text style={styles.tu}> (tú)</Text>}
-                  </Text>
-                  <Text style={styles.parteMonto}>{formatearPesos(p.monto)}</Text>
+            {gasto.participaciones.map((p, i) => {
+              const puedoMarcar = !gasto.eliminado && (p.integranteId === yo?.id || soyAdmin);
+              return (
+                <View key={p.integranteId}>
+                  {i > 0 && <View style={styles.separador} />}
+                  <View style={styles.filaParte}>
+                    <View style={styles.parteTextos}>
+                      <Text style={styles.parteNombre}>
+                        {p.nombre}
+                        {p.integranteId === yo?.id && <Text style={styles.tu}> (tú)</Text>}
+                      </Text>
+                      <Text style={styles.parteMonto}>{formatearPesos(p.monto)}</Text>
+                    </View>
+                    {porCubrir &&
+                      (p.pagada ? (
+                        <Pressable
+                          disabled={!puedoMarcar || marcar.isPending}
+                          onPress={() =>
+                            Alert.alert(
+                              '¿Desmarcar como pagada?',
+                              `La parte de ${p.nombre} volverá a quedar pendiente.`,
+                              [
+                                { text: 'Cancelar', style: 'cancel' },
+                                {
+                                  text: 'Desmarcar',
+                                  style: 'destructive',
+                                  onPress: () =>
+                                    marcar.mutate({
+                                      gastoId: gasto.id,
+                                      integranteId: p.integranteId,
+                                      pagada: false,
+                                    }),
+                                },
+                              ],
+                            )
+                          }
+                          accessibilityRole="button"
+                          accessibilityLabel={`Parte de ${p.nombre} pagada`}
+                        >
+                          <Text style={styles.pagada}>✓ Pagada</Text>
+                        </Pressable>
+                      ) : puedoMarcar ? (
+                        <Pressable
+                          disabled={marcar.isPending}
+                          onPress={() =>
+                            marcar.mutate({ gastoId: gasto.id, integranteId: p.integranteId, pagada: true })
+                          }
+                          accessibilityRole="button"
+                          accessibilityLabel={`Marcar como pagada la parte de ${p.nombre}`}
+                          style={({ pressed }) => [styles.marcar, pressed && styles.presionado]}
+                        >
+                          <Text style={styles.marcarTexto}>Marcar pagada</Text>
+                        </Pressable>
+                      ) : (
+                        <Text style={styles.pendiente}>Pendiente</Text>
+                      ))}
+                  </View>
                 </View>
-              </View>
-            ))}
+              );
+            })}
+            {marcar.isError && <Text style={styles.error}>{marcar.error.message}</Text>}
           </View>
 
           <Text style={styles.registro}>
@@ -208,9 +297,50 @@ const styles = StyleSheet.create({
   etiqueta: { fontSize: 13, fontWeight: '700', color: PALETA.textoSuave, textTransform: 'uppercase' },
   valor: { fontSize: 17, fontWeight: '700', color: PALETA.moradoOscuro },
   separador: { height: 1, backgroundColor: PALETA.lilaClaro },
-  filaParte: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8 },
-  parteNombre: { fontSize: 16, color: PALETA.moradoOscuro },
+  filaParte: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 8,
+  },
+  parteTextos: { flex: 1, flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
+  parteNombre: { fontSize: 16, color: PALETA.moradoOscuro, flexShrink: 1 },
   tu: { color: PALETA.textoSuave },
   parteMonto: { fontSize: 16, fontWeight: '700', color: PALETA.moradoOscuro },
+  ayuda: { fontSize: 13, color: PALETA.textoSuave, lineHeight: 19 },
+  presionado: { opacity: 0.8 },
+  insignias: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6, marginTop: 4 },
+  insignia: {
+    color: PALETA.morado,
+    backgroundColor: PALETA.lilaClaro,
+    fontSize: 13,
+    fontWeight: '800',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
+  insigniaVencida: { color: PALETA.blanco, backgroundColor: PALETA.error },
+  barra: { height: 8, borderRadius: 4, backgroundColor: PALETA.lilaClaro, overflow: 'hidden' },
+  barraRelleno: { height: 8, borderRadius: 4, backgroundColor: '#27A35F' },
+  pagada: {
+    color: '#1E8E5A',
+    backgroundColor: '#E3F5EA',
+    fontSize: 13,
+    fontWeight: '800',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
+  marcar: {
+    backgroundColor: PALETA.morado,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  marcarTexto: { color: PALETA.blanco, fontSize: 13, fontWeight: '800' },
+  pendiente: { color: PALETA.textoSuave, fontSize: 13, fontWeight: '700' },
   registro: { fontSize: 13, color: PALETA.textoSuave, textAlign: 'center' },
 });

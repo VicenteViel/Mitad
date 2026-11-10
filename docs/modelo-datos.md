@@ -86,7 +86,9 @@ Descartada al implementar (decisión 42): el nombre vive en `integrantes`, uno p
 | `monto` | integer | Pesos, mayor que 0 |
 | `categoria` | text | Lista fija: alimentación, arriendo, servicios básicos, transporte, limpieza, compras, otros |
 | `fecha` | date | Día del gasto. Por defecto, hoy |
-| `pagado_por` | uuid → integrantes | |
+| `pagado_por` | uuid → integrantes | Opcional. Vacío = **por cubrir**: nadie lo ha pagado y cada uno paga su parte por fuera |
+| `fecha_limite` | date | Opcional. Pasada esta fecha, se avisa a quien no ha pagado |
+| `gasto_mensual_id` | uuid → gastos_mensuales | Opcional. La plantilla que lo generó |
 | `tipo_division` | text | `equitativa` o `personalizada` |
 | `clave_idempotencia` | uuid | La genera la app. Única por grupo |
 | `version` | integer | Sube en cada edición |
@@ -101,10 +103,13 @@ Descartada al implementar (decisión 42): el nombre vive en `integrantes`, uno p
 | `gasto_id` | uuid → gastos | |
 | `integrante_id` | uuid → integrantes | |
 | `monto` | integer | Mayor que 0 |
+| `pagada_en`, `pagada_marcada_por` | timestamptz, integrante | Solo en gastos por cubrir: cuándo y quién marcó la parte como pagada |
 
 - Un integrante aparece una sola vez por gasto.
 - La suma de las participaciones es igual al monto del gasto.
-- Al editar un gasto, sus participaciones se reemplazan completas.
+- Al editar un gasto, sus participaciones se reemplazan completas (en uno por cubrir, se conserva quién ya pagó su parte).
+
+
 
 ### liquidaciones
 
@@ -156,7 +161,7 @@ Ejemplo: $10.000 entre 3 y pagó Diego, que participa → Diego $3.334, los dem�
 
 Solo cuentan los gastos y liquidaciones no borrados.
 
-1. Por cada gasto, cada participante distinto de quien pagó le debe su participación a quien pagó.
+1. Por cada gasto pagado, cada participante distinto de quien pagó le debe su participación a quien pagó. Los gastos por cubrir no crean deudas entre rumis.
 2. Por cada liquidación, `de` le pagó `monto` a `a`, lo que reduce lo que `de` le debe a `a`.
 3. En cada par se compensan las deudas en ambas direcciones y queda una sola: quién le debe a quién y cuánto.
 
@@ -204,6 +209,8 @@ Gastos y liquidaciones del grupo, del más reciente al más antiguo (por `fecha`
 | | Aceptar (unirse o re-vincular) | Quien tenga el link |
 | Gastos | Crear (participantes: activos y pendientes) | Cualquier integrante activo; si lo pagó un pendiente, solo admins |
 | | Editar y borrar | Admins |
+| | Gasto por cubrir o mensual (crear, detener) | Admins |
+| | Marcar parte pagada (por cubrir) | El propio integrante, o un admin para cualquiera |
 | Liquidaciones | Registrar | Una de las partes, o un admin si la otra ya salió; si una parte es pendiente, solo admins |
 | | Editar y borrar | Admins |
 | | Apodo en el grupo (`actualizar_alias`) | El propio integrante activo |

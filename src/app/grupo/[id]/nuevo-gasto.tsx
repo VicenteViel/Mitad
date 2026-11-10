@@ -3,15 +3,21 @@ import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { BotonPrincipal, PantallaCompleta, SeccionFormulario } from '@/components/pantalla-completa';
+import { SelectorFecha } from '@/components/selector-fecha';
 import { CirculoRumi, SelectorRumi } from '@/components/selector-rumi';
 import { TarjetaMonto } from '@/components/tarjeta-monto';
 import { hoyLocal, nuevaClaveIdempotencia } from '@/features/gastos/api';
 import { dividirEquitativo, type Participacion } from '@/features/gastos/division';
 import type { DatosIntegrantesGasto } from '@/features/gastos/api';
 import type { GastoDetalle } from '@/features/gastos/api-detalle';
+import { fechaLarga, primerVencimientoMensual } from '@/features/gastos/fechas';
 import { iconoCategoria } from '@/features/gastos/historial';
 import { useDetalleGasto, useEditarGasto } from '@/features/gastos/use-detalle-gasto';
-import { useIntegrantesGasto, useRegistrarGasto } from '@/features/gastos/use-registrar-gasto';
+import {
+  useCrearGastoMensual,
+  useIntegrantesGasto,
+  useRegistrarGasto,
+} from '@/features/gastos/use-registrar-gasto';
 import {
   CATEGORIAS,
   formatearEntradaMonto,
@@ -67,7 +73,18 @@ type FormularioProps = {
 function FormularioGasto({ grupoId, datos: data, original }: FormularioProps) {
   const registrar = useRegistrarGasto();
   const editarGasto = useEditarGasto();
-  const { isPending, error } = original ? editarGasto : registrar;
+  const crearMensual = useCrearGastoMensual();
+  const hoy = hoyLocal();
+
+  // Decisiones 48 a 53: un gasto puede estar "por cubrir" (nadie lo pagó aún),
+  // tener fecha límite, o repetirse cada mes. Lo por cubrir y lo mensual, solo admins.
+  const [porCubrir, setPorCubrir] = useState(!!original && original.pagadoPorId === null);
+  const [modoFecha, setModoFecha] = useState<ModoFecha>(original?.fechaLimite ? 'fecha' : 'sin');
+  const [fechaLimite, setFechaLimite] = useState<string | null>(original?.fechaLimite ?? null);
+  const [diaMensual, setDiaMensual] = useState(5);
+
+  const mutacion = original ? editarGasto : modoFecha === 'mensual' ? crearMensual : registrar;
+  const { isPending, error } = mutacion;
 
   const personalizada = original?.tipoDivision === 'personalizada';
   const [descripcion, setDescripcion] = useState(original?.descripcion ?? '');
@@ -92,12 +109,15 @@ function FormularioGasto({ grupoId, datos: data, original }: FormularioProps) {
       : {},
   );
   const [errores, setErrores] = useState<ErroresGasto>({});
+  const [errorFecha, setErrorFecha] = useState<string | null>(null);
   // Una clave por formulario: si "Guardar" se toca de nuevo tras un error de
   // red, el servidor reconoce el reintento y no duplica el gasto.
   const [clave] = useState(nuevaClaveIdempotencia);
 
   const { integrantes, soyAdmin } = data;
-  const pagadoPor = pagadoPorElegido ?? integrantes.find((i) => i.esYo)?.id ?? null;
+  const pagadoPor = porCubrir
+    ? null
+    : (pagadoPorElegido ?? integrantes.find((i) => i.esYo)?.id ?? null);
   const participantes = integrantes.filter((i) => !desmarcados.has(i.id)).map((i) => i.id);
 
   // Vista previa: la misma regla que aplica el servidor.
@@ -105,7 +125,7 @@ function FormularioGasto({ grupoId, datos: data, original }: FormularioProps) {
   let vistaPrevia: Participacion[] = [];
   if (
     tipoDivision === 'equitativa' &&
-    pagadoPor &&
+    (pagadoPor || porCubrir) &&
     montoLeido !== null &&
     participantes.length > 0 &&
     montoLeido >= participantes.length
@@ -131,7 +151,16 @@ function FormularioGasto({ grupoId, datos: data, original }: FormularioProps) {
       montosPersonalizados,
     });
     setErrores(nuevosErrores);
-    if (Object.keys(nuevosErrores).length > 0 || !pagadoPor || montoLeido === null) return;
+    const sinFecha = modoFecha === 'fecha' && !fechaLimite;
+    setErrorFecha(sinFecha ? 'Elige la fecha límite en el calendario.' : null);
+    if (
+      Object.keys(nuevosErrores).length > 0 ||
+      sinFecha ||
+      (!pagadoPor && !porCubrir) ||
+      montoLeido === null
+    ) {
+      return;
+    }
 
     const participaciones =
       tipoDivision === 'equitativa'
@@ -140,40 +169,40 @@ function FormularioGasto({ grupoId, datos: data, original }: FormularioProps) {
             integranteId: id,
             monto: leerMonto(montosPersonalizados[id] ?? '') ?? 0,
           }));
+    const comunes = {
+      grupoId,
+      descripcion: descripcion.trim(),
+      monto: montoLeido,
+      categoria,
+      pagadoPor,
+      tipoDivision,
+      participaciones,
+    };
+    const limite = modoFecha === 'fecha' ? fechaLimite : null;
+    const volver = { onSuccess: () => router.back() };
 
     if (original) {
       editarGasto.mutate(
-        {
-          gastoId: original.id,
-          grupoId,
-          version: original.version,
-          descripcion: descripcion.trim(),
-          monto: montoLeido,
-          categoria,
-          pagadoPor,
-          tipoDivision,
-          participaciones,
-        },
-        { onSuccess: () => router.back() },
+        { ...comunes, gastoId: original.id, version: original.version, fechaLimite: limite },
+        volver,
       );
-      return;
+    } else if (modoFecha === 'mensual') {
+      crearMensual.mutate({ ...comunes, diaVencimiento: diaMensual, claveIdempotencia: clave }, volver);
+    } else {
+      registrar.mutate(
+        { ...comunes, fecha: hoy, fechaLimite: limite, claveIdempotencia: clave },
+        volver,
+      );
     }
-
-    registrar.mutate(
-      {
-        grupoId,
-        descripcion: descripcion.trim(),
-        monto: montoLeido,
-        categoria,
-        fecha: hoyLocal(),
-        pagadoPor,
-        tipoDivision,
-        participaciones,
-        claveIdempotencia: clave,
-      },
-      { onSuccess: () => router.back() },
-    );
   }
+
+  const primerMensual = primerVencimientoMensual(hoy, diaMensual);
+  const opcionesFecha: { valor: ModoFecha; texto: string }[] = [
+    { valor: 'sin', texto: 'Sin fecha' },
+    { valor: 'fecha', texto: 'Una fecha' },
+    // Repetir se elige al crear; un gasto ya creado no se convierte en mensual.
+    ...(!original && soyAdmin ? [{ valor: 'mensual' as const, texto: 'Cada mes' }] : []),
+  ];
 
   const todosMarcados = desmarcados.size === 0;
   // Personalizada: cuánto va asignado y cuánto falta para llegar al monto.
@@ -190,13 +219,12 @@ function FormularioGasto({ grupoId, datos: data, original }: FormularioProps) {
       volver="‹ Grupo"
       pie={
         <BotonPrincipal
-          texto={
-            montoLeido !== null
-              ? `${original ? 'Guardar cambios' : 'Guardar gasto'} · ${formatearPesos(montoLeido)}`
-              : original
-                ? 'Guardar cambios'
-                : 'Guardar gasto'
-          }
+          texto={[
+            original ? 'Guardar cambios' : modoFecha === 'mensual' ? 'Crear gasto mensual' : 'Guardar gasto',
+            montoLeido !== null && formatearPesos(montoLeido),
+          ]
+            .filter(Boolean)
+            .join(' · ')}
           onPress={guardar}
           cargando={isPending}
         />
@@ -250,19 +278,99 @@ function FormularioGasto({ grupoId, datos: data, original }: FormularioProps) {
         </View>
       </SeccionFormulario>
 
-      <SeccionFormulario titulo="¿Quién pagó?">
-        <SelectorRumi
-          etiqueta="Pagó"
-          elegido={pagadoPor}
-          onElegir={setPagadoPor}
-          rumis={integrantes.map((i) => ({
-            ...i,
-            // Regla 14b: solo un admin registra lo que pagó un pendiente.
-            deshabilitado: i.pendiente && !soyAdmin,
-          }))}
+      <SeccionFormulario titulo={porCubrir ? '¿Quién lo pagó?' : '¿Quién pagó?'}>
+        {soyAdmin && (
+          <Segmento
+            valor={porCubrir ? 'por-cubrir' : 'pagado'}
+            onCambiar={(v) => setPorCubrir(v === 'por-cubrir')}
+            opciones={[
+              { valor: 'pagado', texto: 'Ya lo pagó alguien' },
+              { valor: 'por-cubrir', texto: 'Aún no se paga' },
+            ]}
+          />
+        )}
+        {porCubrir ? (
+          <View style={styles.explicacion}>
+            <Text style={styles.explicacionIcono}>🧾</Text>
+            <Text style={styles.explicacionTexto}>
+              Nadie lo ha pagado todavía. Cada rumi paga su parte (por ejemplo, al arrendador) y la
+              marca como pagada en Rumi. No cambia los saldos entre ustedes.
+            </Text>
+          </View>
+        ) : (
+          <>
+            <SelectorRumi
+              etiqueta="Pagó"
+              elegido={pagadoPor}
+              onElegir={setPagadoPor}
+              rumis={integrantes.map((i) => ({
+                ...i,
+                // Regla 14b: solo un admin registra lo que pagó un pendiente.
+                deshabilitado: i.pendiente && !soyAdmin,
+              }))}
+            />
+            {!soyAdmin && integrantes.some((i) => i.pendiente) && (
+              <Text style={styles.nota}>Solo un admin registra gastos pagados por un pendiente.</Text>
+            )}
+          </>
+        )}
+      </SeccionFormulario>
+
+      <SeccionFormulario titulo="Fecha límite">
+        <Segmento
+          valor={modoFecha}
+          onCambiar={(v) => {
+            setModoFecha(v);
+            setErrorFecha(null);
+          }}
+          opciones={opcionesFecha}
         />
-        {!soyAdmin && integrantes.some((i) => i.pendiente) && (
-          <Text style={styles.nota}>Solo un admin registra gastos pagados por un pendiente.</Text>
+        {modoFecha === 'sin' && (
+          <Text style={styles.nota}>
+            Con fecha límite, a quien no haya pagado su parte se le avisa cuando venza.
+          </Text>
+        )}
+        {modoFecha === 'fecha' && (
+          <>
+            <SelectorFecha valor={fechaLimite} hoy={hoy} onCambiar={setFechaLimite} />
+            {fechaLimite && (
+              <Text style={styles.resumenFecha}>Vence el {fechaLarga(fechaLimite, hoy)}</Text>
+            )}
+            {errorFecha && <Text style={styles.error}>{errorFecha}</Text>}
+          </>
+        )}
+        {modoFecha === 'mensual' && (
+          <>
+            <View style={styles.dia}>
+              <Pressable
+                onPress={() => setDiaMensual((d) => Math.max(1, d - 1))}
+                accessibilityRole="button"
+                accessibilityLabel="Un día antes"
+                style={styles.diaBoton}
+              >
+                <Text style={styles.diaBotonTexto}>−</Text>
+              </Pressable>
+              <View style={styles.diaCentro} accessible accessibilityLabel={`Vence el día ${diaMensual} de cada mes`}>
+                <Text style={styles.diaEtiqueta}>Vence el día</Text>
+                <Text style={styles.diaNumero}>{diaMensual}</Text>
+                <Text style={styles.diaEtiqueta}>de cada mes</Text>
+              </View>
+              <Pressable
+                onPress={() => setDiaMensual((d) => Math.min(31, d + 1))}
+                accessibilityRole="button"
+                accessibilityLabel="Un día después"
+                style={styles.diaBoton}
+              >
+                <Text style={styles.diaBotonTexto}>+</Text>
+              </Pressable>
+            </View>
+            <Text style={styles.nota}>
+              🔁 Rumi lo crea solo cada mes, con el mismo monto y división. El primero vence el{' '}
+              {fechaLarga(primerMensual, hoy)}.
+              {diaMensual > 28 && ' En meses más cortos vence el último día.'} Puedes detenerlo en
+              Ajustes del grupo.
+            </Text>
+          </>
         )}
       </SeccionFormulario>
 
@@ -280,29 +388,14 @@ function FormularioGasto({ grupoId, datos: data, original }: FormularioProps) {
           </Pressable>
         }
       >
-        <View style={styles.segmento} accessibilityRole="radiogroup">
-          {(
-            [
-              { valor: 'equitativa', texto: 'Partes iguales' },
-              { valor: 'personalizada', texto: 'Montos distintos' },
-            ] as const
-          ).map((o) => {
-            const activo = tipoDivision === o.valor;
-            return (
-              <Pressable
-                key={o.valor}
-                onPress={() => setTipoDivision(o.valor)}
-                accessibilityRole="radio"
-                accessibilityState={{ selected: activo }}
-                style={[styles.segmentoOpcion, activo && styles.segmentoActivo]}
-              >
-                <Text style={[styles.segmentoTexto, activo && styles.segmentoTextoActivo]}>
-                  {o.texto}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        <Segmento
+          valor={tipoDivision}
+          onCambiar={setTipoDivision}
+          opciones={[
+            { valor: 'equitativa', texto: 'Partes iguales' },
+            { valor: 'personalizada', texto: 'Montos distintos' },
+          ]}
+        />
 
         <View>
           {integrantes.map((i, indice) => {
@@ -385,8 +478,76 @@ function FormularioGasto({ grupoId, datos: data, original }: FormularioProps) {
   );
 }
 
+type ModoFecha = 'sin' | 'fecha' | 'mensual';
+
+type SegmentoProps<T extends string> = {
+  valor: T;
+  onCambiar: (valor: T) => void;
+  opciones: { valor: T; texto: string }[];
+};
+
+// Control segmentado: una opción de varias, como pestañas.
+function Segmento<T extends string>({ valor, onCambiar, opciones }: SegmentoProps<T>) {
+  return (
+    <View style={styles.segmento} accessibilityRole="radiogroup">
+      {opciones.map((o) => {
+        const activo = valor === o.valor;
+        return (
+          <Pressable
+            key={o.valor}
+            onPress={() => onCambiar(o.valor)}
+            accessibilityRole="radio"
+            accessibilityState={{ selected: activo }}
+            style={[styles.segmentoOpcion, activo && styles.segmentoActivo]}
+          >
+            <Text
+              style={[styles.segmentoTexto, activo && styles.segmentoTextoActivo]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
+              {o.texto}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   cargando: { marginVertical: 40 },
+  explicacion: {
+    flexDirection: 'row',
+    gap: 10,
+    backgroundColor: PALETA.lilaClaro,
+    borderRadius: 14,
+    padding: 12,
+  },
+  explicacionIcono: { fontSize: 22 },
+  explicacionTexto: { flex: 1, fontSize: 14, lineHeight: 20, color: PALETA.moradoOscuro },
+  resumenFecha: { fontSize: 15, fontWeight: '800', color: PALETA.morado, textAlign: 'center' },
+  dia: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: PALETA.crema,
+    borderRadius: 18,
+    padding: 10,
+  },
+  diaBoton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: PALETA.blanco,
+    borderWidth: 1.5,
+    borderColor: PALETA.borde,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  diaBotonTexto: { fontSize: 24, fontWeight: '700', color: PALETA.morado },
+  diaCentro: { alignItems: 'center' },
+  diaEtiqueta: { fontSize: 13, fontWeight: '600', color: PALETA.textoSuave },
+  diaNumero: { fontSize: 34, fontWeight: '800', color: PALETA.morado },
   modoPrueba: {
     backgroundColor: PALETA.lilaClaro,
     color: PALETA.morado,

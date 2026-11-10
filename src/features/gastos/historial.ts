@@ -9,9 +9,13 @@ export type GastoHistorial = {
   fecha: string; // YYYY-MM-DD
   creadoEn: string;
   eliminado: boolean;
-  pagadoPorId: string;
-  pagadoPorNombre: string;
-  participaciones: { integranteId: string; monto: number }[];
+  // null: gasto por cubrir (nadie lo ha pagado; cada uno paga su parte).
+  pagadoPorId: string | null;
+  pagadoPorNombre: string | null;
+  fechaLimite: string | null; // YYYY-MM-DD
+  mensual: boolean;
+  // `pagada` solo aplica a gastos por cubrir.
+  participaciones: { integranteId: string; monto: number; pagada: boolean }[];
 };
 
 const ICONOS: Record<Categoria, string> = {

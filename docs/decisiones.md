@@ -97,6 +97,17 @@ Detalle de tablas, cálculos y funciones en [modelo-datos.md](modelo-datos.md).
 46. **Eliminar la cuenta** saca al usuario de todos sus grupos (con sucesión de admin), cambia su nombre a "Ex-rumi" y borra el usuario de Supabase Auth. Los gastos, pagos y saldos se conservan para el resto. Lo hace una Edge Function (`eliminar-cuenta`).
 47. **CI en GitHub Actions:** cada PR corre lint, TypeScript y tests (`npm run verificar` hace lo mismo en local).
 
+### Fechas límite y gastos por cubrir (2026-11-10)
+
+48. **Fecha límite opcional** en cualquier gasto. Se elige en un calendario al crear o editar.
+49. **Gasto por cubrir:** un gasto que nadie ha pagado aún (ej. el arriendo que se le paga al arrendador). No tiene "quién pagó": cada rumi paga su parte por fuera y la marca como pagada (él mismo, o un admin por él). No crea deudas entre rumis ni cambia los saldos. Solo lo crean admins.
+50. **Gasto mensual:** el admin lo crea una vez ("vence el día N de cada mes") y Rumi genera solo el gasto de cada mes, con el mismo monto, división y participantes. Se genera al abrir el grupo, sin tareas programadas, y nunca se duplica. Para cambiar el monto, se detiene y se crea uno nuevo; el gasto de un mes también se puede editar. Solo admins.
+51. **Cuándo está vencido** (pasada la fecha límite, sin contar ese mismo día):
+    - en un gasto por cubrir, para quien no marcó su parte como pagada;
+    - en un gasto pagado, para quien todavía le debe a quien pagó, según el saldo del par: si ya le pagó o la deuda se compensó, no hay aviso. El monto avisado nunca supera la deuda actual.
+52. **Aviso dentro de la app**, sin notificaciones push (llegan con la Etapa 2): un bloque rojo en la pantalla del grupo, con "Pagar" (abre Registrar pago con el monto) o "Ya pagué" (abre el gasto para marcar la parte), y una etiqueta "⏰ N pagos vencidos" en la tarjeta del grupo en Inicio.
+53. **Sin dependencia nueva para elegir fechas:** un calendario propio, igual en iOS y Android.
+
 ---
 
 ## Pendiente antes de la beta (no bloquea empezar)

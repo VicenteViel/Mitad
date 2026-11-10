@@ -14,8 +14,10 @@ export type GastoDetalle = {
   fecha: string;
   tipoDivision: TipoDivision;
   eliminado: boolean;
-  pagadoPorId: string;
-  pagadoPorNombre: string;
+  pagadoPorId: string | null; // null: gasto por cubrir
+  pagadoPorNombre: string | null;
+  fechaLimite: string | null;
+  mensual: boolean;
   creadoPorNombre: string;
   creadoEn: string;
   // Para editar sin pisar a otro admin (decisión 32).
@@ -23,7 +25,7 @@ export type GastoDetalle = {
   editadoPorNombre: string | null;
   editadoEn: string | null;
   eliminadoPorNombre: string | null;
-  participaciones: { integranteId: string; nombre: string; monto: number }[];
+  participaciones: { integranteId: string; nombre: string; monto: number; pagada: boolean }[];
 };
 
 type FilaDetalle = {
@@ -39,11 +41,18 @@ type FilaDetalle = {
   fecha: string;
   tipo_division: string;
   borrado_en: string | null;
-  pagado_por: string;
+  pagado_por: string | null;
+  fecha_limite: string | null;
+  gasto_mensual_id: string | null;
   creado_en: string;
   pagador: { nombre: string } | null;
   creador: { nombre: string } | null;
-  participaciones: { integrante_id: string; monto: number; integrante: { nombre: string } | null }[];
+  participaciones: {
+    integrante_id: string;
+    monto: number;
+    pagada_en: string | null;
+    integrante: { nombre: string } | null;
+  }[];
 };
 
 export async function obtenerDetalleGasto(gastoId: string): Promise<GastoDetalle> {
@@ -51,12 +60,12 @@ export async function obtenerDetalleGasto(gastoId: string): Promise<GastoDetalle
     .from('gastos')
     .select(
       'id, grupo_id, descripcion, monto, categoria, fecha, tipo_division, borrado_en, ' +
-        'pagado_por, creado_en, version, editado_en, ' +
+        'pagado_por, fecha_limite, gasto_mensual_id, creado_en, version, editado_en, ' +
         'pagador:integrantes!gastos_pagado_por_fkey(nombre), ' +
         'creador:integrantes!gastos_creado_por_fkey(nombre), ' +
         'editor:integrantes!gastos_editado_por_fkey(nombre), ' +
         'borrador:integrantes!gastos_borrado_por_fkey(nombre), ' +
-        'participaciones(integrante_id, monto, integrante:integrantes(nombre))',
+        'participaciones(integrante_id, monto, pagada_en, integrante:integrantes(nombre))',
     )
     .eq('id', gastoId)
     .single();
@@ -76,7 +85,9 @@ export async function obtenerDetalleGasto(gastoId: string): Promise<GastoDetalle
     tipoDivision: g.tipo_division === 'personalizada' ? 'personalizada' : 'equitativa',
     eliminado: g.borrado_en !== null,
     pagadoPorId: g.pagado_por,
-    pagadoPorNombre: g.pagador?.nombre ?? 'Alguien',
+    pagadoPorNombre: g.pagado_por ? (g.pagador?.nombre ?? 'Alguien') : null,
+    fechaLimite: g.fecha_limite,
+    mensual: g.gasto_mensual_id !== null,
     creadoPorNombre: g.creador?.nombre ?? 'Alguien',
     creadoEn: g.creado_en,
     version: g.version,
@@ -88,6 +99,7 @@ export async function obtenerDetalleGasto(gastoId: string): Promise<GastoDetalle
         integranteId: p.integrante_id,
         nombre: p.integrante?.nombre ?? 'Rumi',
         monto: p.monto,
+        pagada: p.pagada_en !== null,
       }))
       .sort((a, b) => b.monto - a.monto || a.nombre.localeCompare(b.nombre)),
   };
@@ -100,7 +112,8 @@ export type CambiosGasto = {
   descripcion: string;
   monto: number;
   categoria: Categoria;
-  pagadoPor: string;
+  fechaLimite: string | null;
+  pagadoPor: string | null;
   tipoDivision: TipoDivision;
   participaciones: { integranteId: string; monto: number }[];
 };
@@ -119,6 +132,7 @@ export async function editarGasto(cambios: CambiosGasto): Promise<void> {
     p_descripcion: cambios.descripcion,
     p_monto: cambios.monto,
     p_categoria: cambios.categoria,
+    p_fecha_limite: cambios.fechaLimite,
     p_pagado_por: cambios.pagadoPor,
     p_tipo_division: cambios.tipoDivision,
     p_participantes: cambios.participaciones.map((p) => ({

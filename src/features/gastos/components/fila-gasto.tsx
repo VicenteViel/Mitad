@@ -9,6 +9,7 @@ import {
   textoFecha,
   type GastoHistorial,
 } from '../historial';
+import { fechaCorta } from '../fechas';
 import { formatearPesos } from '../validar-gasto';
 
 type Props = {
@@ -23,9 +24,21 @@ type Props = {
 // Al tocarlo se abre su detalle.
 export function FilaGasto({ gasto, miIntegranteId, hoy, onPress }: Props) {
   const parte = miParte(gasto, miIntegranteId);
+  const porCubrir = gasto.pagadoPorId === null;
   const paguéYo = gasto.pagadoPorId === miIntegranteId;
-  const quienPago = paguéYo ? 'Pagaste tú' : `Pagó ${gasto.pagadoPorNombre}`;
+  const quienPago = porCubrir ? 'Por cubrir' : paguéYo ? 'Pagaste tú' : `Pagó ${gasto.pagadoPorNombre}`;
   const fecha = textoFecha(gasto.fecha, hoy);
+  const miParteCubierta = gasto.participaciones.find((p) => p.integranteId === miIntegranteId)?.pagada;
+
+  // Fecha límite: "vence 5 nov"; si ya pasó y mi parte de un gasto por cubrir
+  // sigue sin pagar, en rojo. (Los vencidos con deuda se avisan arriba.)
+  let limite: { texto: string; vencido: boolean } | null = null;
+  if (gasto.fechaLimite && !gasto.eliminado) {
+    const corta = fechaCorta(gasto.fechaLimite, hoy);
+    if (gasto.fechaLimite >= hoy) limite = { texto: `Vence ${corta}`, vencido: false };
+    else if (porCubrir && parte !== null && !miParteCubierta)
+      limite = { texto: `Tu parte venció ${corta}`, vencido: true };
+  }
 
   const descripcionAccesible = [
     gasto.descripcion,
@@ -33,7 +46,10 @@ export function FilaGasto({ gasto, miIntegranteId, hoy, onPress }: Props) {
     formatearPesos(gasto.monto),
     quienPago,
     fecha,
+    gasto.mensual && 'mensual',
+    limite?.texto,
     parte !== null && `tu parte ${formatearPesos(parte)}`,
+    porCubrir && miParteCubierta && 'tu parte está pagada',
     gasto.eliminado && 'eliminado',
   ]
     .filter(Boolean)
@@ -60,11 +76,18 @@ export function FilaGasto({ gasto, miIntegranteId, hoy, onPress }: Props) {
           style={[styles.descripcion, gasto.eliminado && styles.tachado]}
           numberOfLines={1}
         >
+          {gasto.mensual ? '🔁 ' : ''}
           {gasto.descripcion}
         </Text>
         <Text style={styles.detalle} numberOfLines={1}>
           {gasto.eliminado ? 'Eliminado' : `${quienPago} · ${fecha}`}
         </Text>
+        {limite && (
+          <Text style={[styles.limite, limite.vencido && styles.limiteVencido]} numberOfLines={1}>
+            {limite.vencido ? '⚠ ' : '📅 '}
+            {limite.texto}
+          </Text>
+        )}
       </View>
 
       <View style={styles.montos}>
@@ -72,7 +95,10 @@ export function FilaGasto({ gasto, miIntegranteId, hoy, onPress }: Props) {
           {formatearPesos(gasto.monto)}
         </Text>
         {!gasto.eliminado && parte !== null && (
-          <Text style={styles.parte}>Tu parte {formatearPesos(parte)}</Text>
+          <Text style={[styles.parte, porCubrir && miParteCubierta && styles.partePagada]}>
+            {porCubrir && miParteCubierta ? '✓ ' : 'Tu parte '}
+            {formatearPesos(parte)}
+          </Text>
         )}
         {!gasto.eliminado && parte === null && <Text style={styles.noParticipas}>No participas</Text>}
       </View>
@@ -100,5 +126,8 @@ const styles = StyleSheet.create({
   montos: { alignItems: 'flex-end', gap: 2 },
   total: { fontSize: 16, fontWeight: '800', color: PALETA.moradoOscuro },
   parte: { fontSize: 12, fontWeight: '700', color: PALETA.violeta },
+  partePagada: { color: '#1E8E5A' },
+  limite: { fontSize: 12, fontWeight: '700', color: PALETA.violeta },
+  limiteVencido: { color: PALETA.error },
   noParticipas: { fontSize: 12, color: PALETA.textoSuave },
 });
