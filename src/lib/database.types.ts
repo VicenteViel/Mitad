@@ -435,6 +435,34 @@ export type Database = {
       }
       borrar_evidencia: { Args: { p_evidencia_id: string }; Returns: string }
       crear_invitacion: { Args: { p_integrante_id: string }; Returns: string }
+      editar_gasto: {
+        Args: {
+          p_categoria: string
+          p_descripcion: string
+          p_gasto_id: string
+          p_monto: number
+          p_pagado_por: string
+          p_participantes: Json
+          p_tipo_division: string
+          p_version: number
+        }
+        Returns: number
+      }
+      editar_liquidacion: {
+        Args: {
+          p_a: string
+          p_de: string
+          p_liquidacion_id: string
+          p_monto: number
+          p_version: number
+        }
+        Returns: number
+      }
+      eliminar_gasto: { Args: { p_gasto_id: string }; Returns: undefined }
+      eliminar_liquidacion: {
+        Args: { p_liquidacion_id: string }
+        Returns: undefined
+      }
       es_admin: { Args: { p_grupo_id: string }; Returns: boolean }
       es_integrante: { Args: { p_grupo_id: string }; Returns: boolean }
       hash_codigo_invitacion: { Args: { p_codigo: string }; Returns: string }

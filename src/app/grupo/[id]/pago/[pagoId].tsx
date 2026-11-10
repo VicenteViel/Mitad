@@ -8,7 +8,8 @@ import { hoyLocal } from '@/features/gastos/api';
 import { SeccionEvidencia } from '@/features/gastos/components/seccion-evidencia';
 import { textoFecha } from '@/features/gastos/historial';
 import { formatearPesos } from '@/features/gastos/validar-gasto';
-import { usePagos, useRumisSaldo } from '@/features/saldos/use-saldos';
+import { AccionesAdmin } from '@/components/acciones-admin';
+import { useEliminarPago, usePagos, useRumisSaldo } from '@/features/saldos/use-saldos';
 import { PALETA } from '@/theme/tema';
 
 // Detalle de un pago entre dos rumis, con la evidencia (captura de la
@@ -20,6 +21,7 @@ export default function DetallePagoScreen() {
   const { sesion } = useSesion();
   const pagos = usePagos(grupoId);
   const rumis = useRumisSaldo(grupoId);
+  const eliminar = useEliminarPago(grupoId);
 
   const pago = pagos.data?.find((p) => p.id === pagoId);
   const porId = new Map((rumis.data ?? []).map((r) => [r.id, r]));
@@ -64,6 +66,29 @@ export default function DetallePagoScreen() {
           <Text style={styles.registro}>
             Registrado por {nombre(pago.declaradaPor)} · {textoFecha(pago.creadoEn.slice(0, 10), hoy)}
           </Text>
+          {pago.editadoEn && pago.editadoPor && (
+            <Text style={styles.registro}>
+              Editado por {nombre(pago.editadoPor)} · {textoFecha(pago.editadoEn.slice(0, 10), hoy)}
+            </Text>
+          )}
+          {pago.eliminado && pago.eliminadoPor && (
+            <Text style={styles.registro}>Eliminado por {nombre(pago.eliminadoPor)}</Text>
+          )}
+
+          {yo?.rol === 'admin' && !pago.eliminado && (
+            <AccionesAdmin
+              que="pago"
+              onEditar={() =>
+                router.push({
+                  pathname: '/grupo/[id]/pago/nuevo',
+                  params: { id: grupoId, editar: pago.id },
+                })
+              }
+              onEliminar={() => eliminar.mutate(pago.id, { onSuccess: () => router.back() })}
+              eliminando={eliminar.isPending}
+              error={eliminar.error?.message}
+            />
+          )}
 
           <SeccionEvidencia
             grupoId={grupoId}

@@ -8,36 +8,41 @@ import { useSesion } from '@/features/auth/use-sesion';
 import { hoyLocal, nuevaClaveIdempotencia } from '@/features/gastos/api';
 import { formatearPesos, leerMonto } from '@/features/gastos/validar-gasto';
 import { puedeRegistrarPago } from '@/features/saldos/permisos';
-import { useRegistrarPago, useRumisSaldo, useSaldos } from '@/features/saldos/use-saldos';
+import type { Pago, RumiSaldo } from '@/features/saldos/api';
+import {
+  useEditarPago,
+  usePagos,
+  useRegistrarPago,
+  useSaldos,
+  useRumisSaldo,
+} from '@/features/saldos/use-saldos';
 import { validarPago, type ErroresPago } from '@/features/saldos/validar-pago';
 import { SIMULAR_GUARDADO } from '@/lib/desarrollo';
 import { PALETA } from '@/theme/tema';
 
 // Registrar un pago entre dos rumis (liquidación). Puede venir con quién paga,
-// quién recibe y el monto sugerido desde la tarjeta de saldos.
+// quién recibe y el monto sugerido desde la tarjeta de saldos. Con
+// ?editar=<pagoId>, un admin corrige un pago existente.
 export default function NuevoPagoScreen() {
-  const params = useLocalSearchParams<{ id: string; de?: string; a?: string; monto?: string }>();
-  const grupoId = params.id;
-  const { sesion } = useSesion();
-  const rumis = useRumisSaldo(grupoId);
-  const { saldos } = useSaldos(grupoId);
-  const { mutate, isPending, error } = useRegistrarPago();
+  const params = useLocalSearchParams<{
+    id: string;
+    de?: string;
+    a?: string;
+    monto?: string;
+    editar?: string;
+  }>();
+  const rumis = useRumisSaldo(params.id);
+  const pagos = usePagos(params.id);
+  const original = params.editar ? pagos.data?.find((p) => p.id === params.editar) : undefined;
 
-  const [de, setDe] = useState<string | null>(params.de ?? null);
-  const [a, setA] = useState<string | null>(params.a ?? null);
-  const [monto, setMonto] = useState(params.monto ? formatearPesos(Number(params.monto)).slice(1) : '');
-  const [errores, setErrores] = useState<ErroresPago>({});
-  // Una clave por formulario: un reintento no duplica el pago.
-  const [clave] = useState(nuevaClaveIdempotencia);
-
-  if (rumis.isPending) {
+  if (rumis.isPending || (params.editar && pagos.isPending)) {
     return (
       <PantallaFormulario>
         <ActivityIndicator color={PALETA.morado} />
       </PantallaFormulario>
     );
   }
-  if (rumis.isError || !rumis.data) {
+  if (rumis.isError || !rumis.data || (params.editar && !original)) {
     return (
       <PantallaFormulario>
         <Text style={styles.error}>No pudimos cargar el grupo. Vuelve a intentarlo.</Text>
@@ -45,14 +50,48 @@ export default function NuevoPagoScreen() {
     );
   }
 
-  const lista = rumis.data;
+  return (
+    <FormularioPago
+      grupoId={params.id}
+      rumis={rumis.data}
+      original={original}
+      inicial={{ de: params.de, a: params.a, monto: params.monto }}
+    />
+  );
+}
+
+type FormularioProps = {
+  grupoId: string;
+  rumis: RumiSaldo[];
+  original?: Pago;
+  inicial: { de?: string; a?: string; monto?: string };
+};
+
+function FormularioPago({ grupoId, rumis: lista, original, inicial }: FormularioProps) {
+  const { sesion } = useSesion();
+  const { saldos } = useSaldos(grupoId);
+  const registrar = useRegistrarPago();
+  const editar = useEditarPago();
+  const { isPending, error } = original ? editar : registrar;
+
+  const [de, setDe] = useState<string | null>(original?.de ?? inicial.de ?? null);
+  const [a, setA] = useState<string | null>(original?.a ?? inicial.a ?? null);
+  const montoInicial = original?.monto ?? (inicial.monto ? Number(inicial.monto) : null);
+  const [monto, setMonto] = useState(montoInicial ? formatearPesos(montoInicial).slice(1) : '');
+  const [errores, setErrores] = useState<ErroresPago>({});
+  // Una clave por formulario: un reintento no duplica el pago.
+  const [clave] = useState(nuevaClaveIdempotencia);
+
   const yo = lista.find((r) => r.usuarioId === sesion?.user.id);
   // Activos y pendientes; los que salieron solo si vienen preseleccionados.
   const elegibles = lista.filter((r) => !r.salio || r.id === de || r.id === a);
   const porId = new Map(lista.map((r) => [r.id, r]));
   const rumiDe = de ? porId.get(de) : undefined;
   const rumiA = a ? porId.get(a) : undefined;
-  const permitido = !!rumiDe && !!rumiA && puedeRegistrarPago(yo, rumiDe, rumiA);
+  // Al editar decide el rol de admin (lo valida el servidor); al registrar, las reglas 14b y 18.
+  const permitido = original
+    ? yo?.rol === 'admin'
+    : !!rumiDe && !!rumiA && puedeRegistrarPago(yo, rumiDe, rumiA);
 
   // Lo que debe hoy "de" a "a", para sugerir el monto exacto (regla 31).
   const deudaActual =
@@ -71,7 +110,14 @@ export default function NuevoPagoScreen() {
     if (Object.keys(nuevosErrores).length > 0 || !de || !a || montoLeido === null) return;
     if (!permitido) return;
 
-    mutate(
+    if (original) {
+      editar.mutate(
+        { pagoId: original.id, grupoId, version: original.version, de, a, monto: montoLeido },
+        { onSuccess: () => router.back() },
+      );
+      return;
+    }
+    registrar.mutate(
       { grupoId, de, a, monto: montoLeido, fecha: hoyLocal(), claveIdempotencia: clave },
       { onSuccess: () => router.back() },
     );
@@ -80,7 +126,7 @@ export default function NuevoPagoScreen() {
   return (
     <PantallaFormulario>
       <Text style={styles.titulo} accessibilityRole="header">
-        Registrar pago
+        {original ? 'Editar pago' : 'Registrar pago'}
       </Text>
       <Text style={styles.subtitulo}>Anota un pago que se hicieron dos rumis.</Text>
       {SIMULAR_GUARDADO && (
@@ -138,13 +184,17 @@ export default function NuevoPagoScreen() {
         </Text>
       )}
 
-      {rumiDe && rumiA && !permitido && (
+      {rumiDe && rumiA && !permitido && !original && (
         <Text style={styles.error}>
           No puedes registrar este pago. Lo registra una de las dos personas, o un admin si alguna
           está pendiente.
         </Text>
       )}
-      {error && <Text style={styles.error}>No pudimos guardar el pago. Intenta de nuevo.</Text>}
+      {error && (
+        <Text style={styles.error}>
+          {original ? error.message : 'No pudimos guardar el pago. Intenta de nuevo.'}
+        </Text>
+      )}
 
       <Pressable
         onPress={guardar}
