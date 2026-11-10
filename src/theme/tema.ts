@@ -5,7 +5,8 @@ export const PALETA = {
   morado: '#6B3FA0',
   moradoOscuro: '#2E1A47',
   violeta: '#8E5BD8',
-  lila: '#B9A3E3', // fondo de los formularios: morado suave
+  moradoProfundo: '#2B0E43', // fondo de los formularios y del logo
+  lila: '#B9A3E3', // mitad clara del logo
   lilaClaro: '#EDE5F8',
   crema: '#FBF8F2',
   blanco: '#FFFFFF',

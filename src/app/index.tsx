@@ -1,7 +1,9 @@
 import { router, useFocusEffect } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useCallback } from 'react';
 import {
   ActivityIndicator,
+  Image,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -57,8 +59,15 @@ export default function InicioScreen() {
         />
       }
     >
+      <StatusBar style="dark" />
       {/* Encabezado */}
       <View style={styles.encabezado}>
+        <Image
+          source={require('../../assets/images/logo.png')}
+          style={styles.logo}
+          accessibilityRole="image"
+          accessibilityLabel="Logo de Rumi"
+        />
         <View style={styles.saludo}>
           <Text style={styles.hola}>¡Hola!</Text>
           <Text style={styles.correo} numberOfLines={1}>
@@ -190,6 +199,7 @@ const styles = StyleSheet.create({
   contenido: { paddingHorizontal: 20, paddingBottom: 48, gap: 14 },
 
   encabezado: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  logo: { width: 52, height: 52, borderRadius: 14, marginRight: 12 },
   saludo: { flex: 1, gap: 2 },
   hola: { fontSize: 28, fontWeight: '800', color: PALETA.moradoOscuro },
   correo: { fontSize: 14, color: PALETA.textoSuave },
