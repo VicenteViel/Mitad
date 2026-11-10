@@ -67,19 +67,25 @@ To run the quality checks:
 npm run verificar
 ```
 
-Supabase credentials and project configuration are required for backend features. Do not commit local secrets.
+---
 
 ## Roadmap
 
-- [x] Shared-expenses MVP: groups, invitations, expenses, balances, and settlements
-- [x] Automated checks for the existing codebase
-- [ ] Beta readiness and end-to-end testing
-- [ ] Household chore management ("Hoy Te Toca")
-- [ ] Premium subscriptions
-- [ ] App Store and Google Play releases
+**Phase 1 — Expense management** ✅
+Auth, groups, invitations, expenses, splits, balances, settlements, receipts, history, due dates, CI.
 
-For more details, see the [project documentation](docs/README.md) and [architectural decisions](docs/decisiones.md).
+**Phase 2 — Hoy Te Toca**
+Chores, recurring tasks, rotation, shared calendar, notifications.
+
+**Phase 3 — Launch**
+Subscriptions per household, closed beta, Google Play and App Store release.
 
 ---
 
-**Built by [Vicente Viel](https://github.com/VicenteViel).**
+## Documentation
+
+Product decisions and the data model are documented (in Spanish) in [`docs/`](docs/).
+
+## License
+
+License to be defined.
