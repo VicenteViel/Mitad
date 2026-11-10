@@ -31,7 +31,15 @@
           "imageWidth": 200
         }
       ],
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Rumi necesita acceso a tus fotos para subir comprobantes de los gastos.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

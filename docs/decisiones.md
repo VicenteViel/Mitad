@@ -52,6 +52,7 @@ Registro de las decisiones de producto y arquitectura. Si una decisión cambia, 
 17. **Deudas en pares directos**, compensadas dentro de cada par y sin simplificar. Ej.: Camila le debe $10.000 a Diego y Diego le debe $3.000 a Camila → una sola deuda: Camila → Diego $7.000. Simplificar deudas se puede agregar después sin migrar datos.
 18. **Una liquidación la declara cualquiera de las dos partes, sin confirmación**, y se descuenta del saldo del par (no de gastos específicos). Si una de las partes ya no está en el grupo, la declara la otra o un admin. Si una de las partes es pendiente, solo la declara un admin (regla 14b).
 19. **Borrado lógico** de gastos y liquidaciones, con registro de quién y cuándo.
+19b. **Evidencia de un gasto:** cada gasto puede tener **varias** capturas de comprobantes (transferencias, boletas). Cualquier rumi activo del grupo puede subir; borra quien la subió o un admin. Se guardan en un bucket **privado** de Supabase Storage (`{grupo}/{gasto}/{archivo}`, máximo 5 MB, JPG/PNG/HEIC/WEBP) y se muestran con enlaces temporales. La evidencia es informativa: no cambia saldos (eso lo hará una liquidación).
 20. **Los saldos se calculan, nunca se guardan.** Se derivan de gastos, participaciones y liquidaciones.
 21. **Las operaciones de dinero son funciones de Postgres (RPC)**, atómicas y con clave de idempotencia para evitar duplicados por reintentos.
 
