@@ -1,13 +1,24 @@
-import { Stack } from 'expo-router';
+import { Redirect, Stack } from 'expo-router';
 
-import { INVITACION_DE_PRUEBA } from '@/features/invitaciones/invitacion';
+import {
+  INVITACION_DE_PRUEBA,
+  leerInvitacionAceptada,
+} from '@/features/invitaciones/invitacion';
 import { InvitacionProvider } from '@/features/invitaciones/invitacion-context';
+import { SIMULAR_GUARDADO } from '@/lib/desarrollo';
 
-// Flujo después de aceptar un link de invitación. Por ahora usa datos de
-// prueba; con invitaciones reales, recibirá lo que devuelva Supabase al aceptar.
+// Flujo justo después de aceptar una invitación. Usa la invitación recién
+// aceptada; en modo prueba, si no hay una, usa datos de ejemplo.
 export default function UnirseLayout() {
+  const invitacion =
+    leerInvitacionAceptada() ?? (SIMULAR_GUARDADO ? INVITACION_DE_PRUEBA : null);
+
+  if (!invitacion) {
+    return <Redirect href="/" />;
+  }
+
   return (
-    <InvitacionProvider invitacion={INVITACION_DE_PRUEBA}>
+    <InvitacionProvider invitacion={invitacion}>
       <Stack screenOptions={{ headerShown: false }} />
     </InvitacionProvider>
   );

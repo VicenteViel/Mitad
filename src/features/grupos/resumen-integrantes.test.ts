@@ -9,6 +9,7 @@ function integrante(cambios: Partial<IntegranteDetalle>): IntegranteDetalle {
     avatar: 'hombre',
     color: 'azul',
     usuarioId: 'u1',
+    alias: null,
     ...cambios,
   };
 }

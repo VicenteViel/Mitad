@@ -1,5 +1,5 @@
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -15,7 +15,7 @@ import { BotonOpcion } from '@/components/boton-opcion';
 import { useSesion } from '@/features/auth/use-sesion';
 import { TarjetaGrupo } from '@/features/grupos/components/tarjeta-grupo';
 import { useMisGrupos } from '@/features/grupos/use-mis-grupos';
-import { leerAvisoCorreo, type AvisoCorreo } from '@/features/invitaciones/aviso-correo';
+import { useAvisoCorreo } from '@/features/invitaciones/use-aviso-correo';
 import { SIMULAR_GUARDADO } from '@/lib/desarrollo';
 import { supabase } from '@/lib/supabase';
 import { PALETA } from '@/theme/tema';
@@ -24,22 +24,22 @@ export default function InicioScreen() {
   const { sesion } = useSesion();
   const insets = useSafeAreaInsets();
   const { data: grupos, isPending, isError, refetch, isRefetching } = useMisGrupos();
-  const [ayudaInvitacion, setAyudaInvitacion] = useState(false);
 
   // El camino lo decide la cuenta, no lo que la persona eligió al entrar:
   // con grupos ve sus grupos; sin grupos ve "¿Qué quieres hacer?".
   const sinGrupos = grupos?.length === 0;
   const conGrupos = grupos !== undefined && grupos.length > 0;
 
-  // Recordatorio de correo pendiente; se relee cada vez que se vuelve a Inicio.
-  const [avisoCorreo, setAvisoCorreo] = useState<AvisoCorreo>(null);
+  // Recordatorio de correo (sin correo o sin confirmar); se revisa cada vez que
+  // se vuelve a Inicio, por si ya confirmó el enlace.
+  const { aviso: avisoCorreo, recargar: recargarAviso } = useAvisoCorreo();
   useFocusEffect(
     useCallback(() => {
-      setAvisoCorreo(leerAvisoCorreo());
-    }, []),
+      void recargarAviso();
+    }, [recargarAviso]),
   );
 
-  const correo = sesion?.user.email ?? '';
+  const correo = sesion?.user.email || 'Sin correo';
   const inicial = correo.charAt(0).toUpperCase() || 'R';
 
   return (
@@ -49,7 +49,10 @@ export default function InicioScreen() {
       refreshControl={
         <RefreshControl
           refreshing={isRefetching}
-          onRefresh={() => void refetch()}
+          onRefresh={() => {
+            void refetch();
+            void recargarAviso();
+          }}
           tintColor={PALETA.morado}
         />
       }
@@ -110,15 +113,9 @@ export default function InicioScreen() {
           />
           <BotonOpcion
             titulo="Me invitaron"
-            detalle="Tengo un link de invitación del administrador."
-            onPress={() => (SIMULAR_GUARDADO ? router.push('/unido') : setAyudaInvitacion(true))}
+            detalle="Tengo un código o un link del administrador."
+            onPress={() => router.push('/invitacion')}
           />
-          {ayudaInvitacion && (
-            <Text style={styles.ayudaInvitacion}>
-              Busca el mensaje con el link (por ejemplo, en WhatsApp) y ábrelo desde este teléfono.
-              La app te llevará directo a tu grupo.
-            </Text>
-          )}
 
           <View style={styles.otroCorreo}>
             <Text style={styles.otroCorreoTitulo}>¿Esperabas ver tus grupos?</Text>
@@ -164,12 +161,16 @@ export default function InicioScreen() {
             />
           ))}
 
-          <View style={styles.invitacion}>
+          <Pressable
+            onPress={() => router.push('/invitacion')}
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.invitacion, pressed && styles.presionado]}
+          >
             <Text style={styles.invitacionTitulo}>¿Te invitaron a otro grupo?</Text>
             <Text style={styles.invitacionTexto}>
-              Abre en este teléfono el link que te envió el administrador.
+              Abre el link en este teléfono o toca aquí para escribir el código.
             </Text>
-          </View>
+          </Pressable>
         </>
       )}
 
@@ -269,7 +270,6 @@ const styles = StyleSheet.create({
   avisoTexto: { fontSize: 14, color: PALETA.textoSuave },
 
   comenzarTitulo: { fontSize: 22, fontWeight: '800', color: PALETA.moradoOscuro, marginTop: 8 },
-  ayudaInvitacion: { fontSize: 14, color: PALETA.textoSuave, lineHeight: 20, paddingHorizontal: 4 },
   otroCorreo: {
     gap: 4,
     padding: 16,

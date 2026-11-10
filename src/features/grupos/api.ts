@@ -45,6 +45,7 @@ export type IntegranteDetalle = {
   color: Color;
   // Vacío = pendiente (no ha aceptado su invitación).
   usuarioId: string | null;
+  alias: string | null;
 };
 
 export type GrupoDetalle = {
@@ -59,7 +60,7 @@ export type GrupoDetalle = {
 export async function obtenerGrupo(grupoId: string): Promise<GrupoDetalle> {
   const { data, error } = await supabase
     .from('grupos')
-    .select('id, nombre, descripcion, integrantes(id, nombre, rol, avatar, color, usuario_id)')
+    .select('id, nombre, descripcion, integrantes(id, nombre, alias, rol, avatar, color, usuario_id)')
     .eq('id', grupoId)
     .is('integrantes.salio_en', null)
     .order('unido_en', { referencedTable: 'integrantes', ascending: true })
@@ -80,6 +81,7 @@ export async function obtenerGrupo(grupoId: string): Promise<GrupoDetalle> {
       avatar: i.avatar === 'mujer' ? 'mujer' : 'hombre',
       color: i.color === 'rosado' ? 'rosado' : 'azul',
       usuarioId: i.usuario_id,
+      alias: i.alias,
     })),
   };
 }

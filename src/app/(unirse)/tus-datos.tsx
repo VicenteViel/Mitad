@@ -1,45 +1,70 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { PantallaFormulario } from '@/components/pantalla-formulario';
+import { useSesion } from '@/features/auth/use-sesion';
 import { COLORES } from '@/features/grupos/apariencia';
 import { LIMITES } from '@/features/grupos/validar-nuevo-grupo';
+import { actualizarAlias, agregarCorreo } from '@/features/invitaciones/api';
 import { definirAvisoCorreo } from '@/features/invitaciones/aviso-correo';
 import { useInvitacion } from '@/features/invitaciones/invitacion-context';
 import {
   validarDatosIntegrante,
   type ErroresDatosIntegrante,
 } from '@/features/invitaciones/validar-datos-integrante';
-import { esperar } from '@/lib/desarrollo';
+import { esperar, SIMULAR_GUARDADO } from '@/lib/desarrollo';
 import { PALETA } from '@/theme/tema';
 
 // Datos personales al entrar a un grupo: foto (próximamente), nombre puesto por
-// el admin (no editable), alias y correo opcionales.
+// el admin (no editable), apodo y correo opcionales. Si la persona ya entró
+// con su correo, no se le pide de nuevo.
 export default function TusDatosScreen() {
-  const { integrante } = useInvitacion();
+  const { grupo, integrante } = useInvitacion();
+  const { sesion } = useSesion();
+  const queryClient = useQueryClient();
+  const yaTieneCorreo = !!sesion?.user.email && !sesion.user.is_anonymous;
   const [alias, setAlias] = useState('');
   const [correo, setCorreo] = useState('');
   const [errores, setErrores] = useState<ErroresDatosIntegrante>({});
   const [avisoSinCorreo, setAvisoSinCorreo] = useState(false);
   const [guardando, setGuardando] = useState(false);
+  const [errorGuardar, setErrorGuardar] = useState<string | null>(null);
 
   async function terminar(conCorreo: boolean) {
     setGuardando(true);
-    // Modo prueba: todavía no se guarda en Supabase. Ver PR de invitaciones reales.
-    await esperar(600);
-    definirAvisoCorreo(
-      conCorreo ? { tipo: 'verificar', correo: correo.trim().toLowerCase() } : { tipo: 'agregar' },
-    );
-    setGuardando(false);
-    router.dismissTo('/');
+    setErrorGuardar(null);
+    try {
+      if (SIMULAR_GUARDADO) {
+        await esperar(600);
+        definirAvisoCorreo(
+          conCorreo
+            ? { tipo: 'verificar', correo: correo.trim().toLowerCase() }
+            : { tipo: 'agregar' },
+        );
+      } else {
+        if (alias.trim()) await actualizarAlias(grupo.id, alias);
+        if (conCorreo) await agregarCorreo(correo);
+        await queryClient.invalidateQueries();
+      }
+      router.replace('/');
+    } catch (e) {
+      setErrorGuardar(e instanceof Error ? e.message : 'No pudimos guardar tus datos.');
+    } finally {
+      setGuardando(false);
+    }
   }
 
   function continuar() {
-    const nuevosErrores = validarDatosIntegrante({ alias, correo });
+    const nuevosErrores = validarDatosIntegrante({ alias, correo: yaTieneCorreo ? '' : correo });
     setErrores(nuevosErrores);
     if (Object.keys(nuevosErrores).length > 0) return;
 
+    if (yaTieneCorreo) {
+      void terminar(false);
+      return;
+    }
     if (!correo.trim()) {
       setAvisoSinCorreo(true);
       return;
@@ -87,28 +112,35 @@ export default function TusDatosScreen() {
       />
       {errores.alias && <Text style={styles.error}>{errores.alias}</Text>}
 
-      <Text style={styles.label}>Correo electrónico</Text>
-      <TextInput
-        style={styles.input}
-        value={correo}
-        onChangeText={(texto) => {
-          setCorreo(texto);
-          setAvisoSinCorreo(false);
-        }}
-        placeholder="nombre@correo.com"
-        placeholderTextColor={PALETA.textoSuave}
-        keyboardType="email-address"
-        autoCapitalize="none"
-        autoComplete="email"
-        textContentType="emailAddress"
-        accessibilityLabel="Correo electrónico"
-      />
-      {errores.correo && <Text style={styles.error}>{errores.correo}</Text>}
-      <View style={styles.llave}>
-        <Text style={styles.llaveTexto}>
-          🔑 Tu correo es la llave para volver a tu grupo si pierdes o cambias el teléfono.
-        </Text>
-      </View>
+      {!yaTieneCorreo && (
+        <>
+          <Text style={styles.label}>Correo electrónico</Text>
+          <TextInput
+            style={styles.input}
+            value={correo}
+            onChangeText={(texto) => {
+              setCorreo(texto);
+              setAvisoSinCorreo(false);
+            }}
+            placeholder="nombre@correo.com"
+            placeholderTextColor={PALETA.textoSuave}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoComplete="email"
+            textContentType="emailAddress"
+            accessibilityLabel="Correo electrónico"
+          />
+          {errores.correo && <Text style={styles.error}>{errores.correo}</Text>}
+          <View style={styles.llave}>
+            <Text style={styles.llaveTexto}>
+              🔑 Tu correo es la llave para volver a tu grupo si pierdes o cambias el teléfono.
+              Te enviaremos un enlace para confirmarlo.
+            </Text>
+          </View>
+        </>
+      )}
+
+      {errorGuardar && <Text style={styles.error}>{errorGuardar}</Text>}
 
       {avisoSinCorreo && (
         <View style={styles.aviso}>

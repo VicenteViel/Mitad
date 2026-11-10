@@ -1,6 +1,6 @@
-import { useTheme } from 'expo-router';
+import { router, useTheme } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput } from 'react-native';
 
 import { PantallaFormulario } from '@/components/pantalla-formulario';
 import { supabase } from '@/lib/supabase';
@@ -125,14 +125,21 @@ export default function IngresarScreen() {
         </Pressable>
       )}
 
-      {/* Quien era integrante sin correo no puede volver por aquí: necesita un link nuevo. */}
+      {/* Quien recibió una invitación entra sin correo con su código. Quien era
+          integrante sin correo y perdió el teléfono necesita una invitación nueva. */}
       {paso === 'correo' && (
-        <View style={styles.nota}>
-          <Text style={styles.notaTitulo}>¿Eras parte de un grupo y nunca registraste tu correo?</Text>
+        <Pressable
+          onPress={() => router.push('/invitacion')}
+          accessibilityRole="button"
+          style={({ pressed }) => [styles.nota, pressed && styles.notaPresionada]}
+        >
+          <Text style={styles.notaTitulo}>¿Te invitaron a un grupo?</Text>
           <Text style={styles.notaTexto}>
-            Pídele al administrador un nuevo link de invitación para recuperar tu lugar.
+            Entra con el código o el link que te envió el administrador, sin necesidad de correo.
+            Si eras parte de un grupo y nunca registraste tu correo, pídele uno nuevo.
           </Text>
-        </View>
+          <Text style={styles.notaEnlace}>Tengo un código →</Text>
+        </Pressable>
       )}
     </PantallaFormulario>
   );
@@ -144,6 +151,8 @@ const styles = StyleSheet.create({
   nota: { backgroundColor: PALETA.lilaClaro, borderRadius: 14, padding: 14, gap: 4, marginTop: 8 },
   notaTitulo: { fontSize: 14, fontWeight: '700', color: PALETA.moradoOscuro },
   notaTexto: { fontSize: 14, color: PALETA.textoSuave, lineHeight: 20 },
+  notaEnlace: { fontSize: 14, fontWeight: '700', color: PALETA.morado, marginTop: 4 },
+  notaPresionada: { opacity: 0.85 },
   label: { fontSize: 16 },
   input: { borderWidth: 1, borderRadius: 12, padding: 14, fontSize: 18 },
   error: { color: PALETA.error, fontSize: 14 },

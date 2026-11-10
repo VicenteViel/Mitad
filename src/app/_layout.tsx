@@ -34,6 +34,10 @@ export default function RootLayout() {
             {/* Detalle del grupo y lo que cuelga de él (por ejemplo, nuevo gasto). */}
             <Stack.Screen name="grupo/[id]" />
           </Stack.Protected>
+          {/* Invitaciones: funcionan con o sin sesión (quien no tiene cuenta
+              entra sin correo al aceptar). */}
+          <Stack.Screen name="invitacion/index" />
+          <Stack.Screen name="invitacion/[codigo]" />
         </Stack>
       </ThemeProvider>
     </QueryClientProvider>

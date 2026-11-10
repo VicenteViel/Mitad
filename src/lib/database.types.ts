@@ -155,6 +155,7 @@ export type Database = {
       }
       integrantes: {
         Row: {
+          alias: string | null
           avatar: string
           color: string
           grupo_id: string
@@ -166,6 +167,7 @@ export type Database = {
           usuario_id: string | null
         }
         Insert: {
+          alias?: string | null
           avatar: string
           color: string
           grupo_id: string
@@ -177,6 +179,7 @@ export type Database = {
           usuario_id?: string | null
         }
         Update: {
+          alias?: string | null
           avatar?: string
           color?: string
           grupo_id?: string
@@ -193,6 +196,67 @@ export type Database = {
             columns: ["grupo_id"]
             isOneToOne: false
             referencedRelation: "grupos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invitaciones: {
+        Row: {
+          creada_en: string
+          creada_por: string
+          expira_en: string
+          grupo_id: string
+          id: string
+          integrante_id: string | null
+          revocada_en: string | null
+          token_hash: string
+          usada_en: string | null
+          usada_por: string | null
+        }
+        Insert: {
+          creada_en?: string
+          creada_por: string
+          expira_en?: string
+          grupo_id: string
+          id?: string
+          integrante_id?: string | null
+          revocada_en?: string | null
+          token_hash: string
+          usada_en?: string | null
+          usada_por?: string | null
+        }
+        Update: {
+          creada_en?: string
+          creada_por?: string
+          expira_en?: string
+          grupo_id?: string
+          id?: string
+          integrante_id?: string | null
+          revocada_en?: string | null
+          token_hash?: string
+          usada_en?: string | null
+          usada_por?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitaciones_creada_por_fkey"
+            columns: ["creada_por"]
+            isOneToOne: false
+            referencedRelation: "integrantes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invitaciones_grupo_id_fkey"
+            columns: ["grupo_id"]
+            isOneToOne: false
+            referencedRelation: "grupos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invitaciones_integrante_id_fkey"
+            columns: ["integrante_id"]
+            isOneToOne: false
+            referencedRelation: "integrantes"
             referencedColumns: ["id"]
           },
         ]
@@ -235,11 +299,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      aceptar_invitacion: { Args: { p_codigo: string }; Returns: Json }
+      actualizar_alias: {
+        Args: { p_alias: string; p_grupo_id: string }
+        Returns: undefined
+      }
       agregar_integrantes: {
         Args: { p_grupo_id: string; p_integrantes: Json }
         Returns: number
       }
+      crear_invitacion: { Args: { p_integrante_id: string }; Returns: string }
+      es_admin: { Args: { p_grupo_id: string }; Returns: boolean }
       es_integrante: { Args: { p_grupo_id: string }; Returns: boolean }
+      hash_codigo_invitacion: { Args: { p_codigo: string }; Returns: string }
       iniciar_grupo: {
         Args: {
           p_avatar: string

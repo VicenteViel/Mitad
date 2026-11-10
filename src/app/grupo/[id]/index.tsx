@@ -23,8 +23,9 @@ export default function GrupoScreen() {
   const { sesion } = useSesion();
   const { data: grupo, isPending, isError, refetch, isRefetching } = useGrupo(grupoId);
 
-  // La pantalla para registrar gastos llega en su propio PR.
   const rutaNuevoGasto = `/grupo/${grupoId}/nuevo-gasto` as Href;
+  const soyAdmin =
+    grupo?.integrantes.some((i) => i.usuarioId === sesion?.user.id && i.rol === 'admin') ?? false;
 
   return (
     <ScrollView
@@ -84,13 +85,6 @@ export default function GrupoScreen() {
               <Text style={styles.accionIcono}>＋</Text>
               <Text style={styles.accionPrincipalTexto}>Agregar gasto</Text>
             </Pressable>
-            <View
-              style={[styles.accion, styles.accionSecundaria]}
-              accessibilityState={{ disabled: true }}
-            >
-              <Text style={styles.accionSecundariaTexto}>Invitar</Text>
-              <Text style={styles.proximamente}>Próximamente</Text>
-            </View>
           </View>
 
           {/* Rumis (integrantes) */}
@@ -102,6 +96,14 @@ export default function GrupoScreen() {
                 <FilaIntegranteGrupo
                   integrante={integrante}
                   etiquetas={etiquetasIntegrante(integrante, sesion?.user.id)}
+                  onInvitar={
+                    soyAdmin && integrante.usuarioId === null
+                      ? () =>
+                          router.push(
+                            `/grupo/${grupoId}/invitar/${integrante.id}` as Href,
+                          )
+                      : undefined
+                  }
                 />
               </View>
             ))}
@@ -167,9 +169,6 @@ const styles = StyleSheet.create({
   accionPrincipal: { backgroundColor: PALETA.violeta, flexDirection: 'row', gap: 6 },
   accionIcono: { color: PALETA.blanco, fontSize: 18, fontWeight: '800' },
   accionPrincipalTexto: { color: PALETA.blanco, fontSize: 16, fontWeight: '700' },
-  accionSecundaria: { backgroundColor: PALETA.lilaClaro, opacity: 0.7 },
-  accionSecundariaTexto: { color: PALETA.morado, fontSize: 16, fontWeight: '700' },
-  proximamente: { color: PALETA.textoSuave, fontSize: 11, fontWeight: '600' },
   presionado: { opacity: 0.85 },
 
   seccion: { fontSize: 20, fontWeight: '800', color: PALETA.moradoOscuro, marginTop: 8 },
