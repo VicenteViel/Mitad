@@ -74,9 +74,15 @@ export default function InicioScreen() {
             {correo}
           </Text>
         </View>
-        <View style={styles.avatar} accessibilityElementsHidden>
+        <Pressable
+          onPress={() => router.push('/cuenta')}
+          accessibilityRole="button"
+          accessibilityLabel="Mi cuenta"
+          hitSlop={8}
+          style={({ pressed }) => [styles.avatar, pressed && styles.presionado]}
+        >
           <Text style={styles.avatarTexto}>{inicial}</Text>
-        </View>
+        </Pressable>
       </View>
 
       {SIMULAR_GUARDADO && (
@@ -89,7 +95,11 @@ export default function InicioScreen() {
       )}
 
       {avisoCorreo && (
-        <View style={styles.avisoCorreo}>
+        <Pressable
+          onPress={() => router.push('/cuenta')}
+          accessibilityRole="button"
+          style={({ pressed }) => [styles.avisoCorreo, pressed && styles.presionado]}
+        >
           <Text style={styles.avisoCorreoTitulo}>
             {avisoCorreo.tipo === 'verificar' ? 'Verifica tu correo' : 'Agrega tu correo'}
           </Text>
@@ -98,7 +108,8 @@ export default function InicioScreen() {
               ? `Te enviamos un enlace a ${avisoCorreo.correo}. Confírmalo para poder recuperar tu lugar si pierdes el teléfono.`
               : 'Sin correo no podrás recuperar tu lugar en el grupo si pierdes el teléfono.'}
           </Text>
-        </View>
+          <Text style={styles.avisoCorreoEnlace}>Ir a Mi cuenta →</Text>
+        </Pressable>
       )}
 
       {isPending && <ActivityIndicator color={PALETA.morado} style={styles.cargando} />}
@@ -184,11 +195,11 @@ export default function InicioScreen() {
       )}
 
       <Pressable
-        onPress={() => supabase.auth.signOut()}
+        onPress={() => router.push('/cuenta')}
         accessibilityRole="button"
         style={styles.salir}
       >
-        <Text style={styles.salirTexto}>Cerrar sesión</Text>
+        <Text style={styles.salirTexto}>Mi cuenta</Text>
       </Pressable>
     </ScrollView>
   );
@@ -225,6 +236,7 @@ const styles = StyleSheet.create({
   },
   avisoCorreoTitulo: { fontSize: 16, fontWeight: '700', color: PALETA.moradoOscuro },
   avisoCorreoTexto: { fontSize: 14, color: PALETA.textoSuave, lineHeight: 20 },
+  avisoCorreoEnlace: { fontSize: 14, fontWeight: '700', color: PALETA.morado, marginTop: 2 },
   modoPrueba: {
     alignSelf: 'flex-start',
     backgroundColor: PALETA.lilaClaro,

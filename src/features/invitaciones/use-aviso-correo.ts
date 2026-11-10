@@ -1,28 +1,21 @@
-import { useQuery } from '@tanstack/react-query';
-
-import { supabase } from '@/lib/supabase';
+import { useUsuarioActual } from '@/features/cuenta/use-usuario-actual';
 
 import { leerAvisoCorreo, type AvisoCorreo } from './aviso-correo';
 
-export const CLAVE_USUARIO_ACTUAL = ['usuario-actual'] as const;
+export { CLAVE_USUARIO_ACTUAL } from '@/features/cuenta/use-usuario-actual';
 
 // Aviso de correo en Inicio, deducido de la cuenta:
 // - sin correo (sesión anónima) → "Agrega tu correo";
 // - correo agregado pero sin confirmar → "Verifica tu correo".
 // En modo prueba se usa el aviso guardado en memoria.
 export function useAvisoCorreo(): { aviso: AvisoCorreo; recargar: () => Promise<unknown> } {
-  const { data: usuario, refetch } = useQuery({
-    queryKey: CLAVE_USUARIO_ACTUAL,
-    // getUser consulta al servidor, así ve si el correo ya se confirmó.
-    queryFn: async () => (await supabase.auth.getUser()).data.user,
-  });
+  const { data: usuario, estado, refetch } = useUsuarioActual();
 
   const simulado = leerAvisoCorreo();
   let aviso: AvisoCorreo = simulado;
-  if (!simulado && usuario?.is_anonymous) {
-    aviso = usuario.new_email
-      ? { tipo: 'verificar', correo: usuario.new_email }
-      : { tipo: 'agregar' };
+  if (!simulado && usuario) {
+    if (estado.tipo === 'verificando') aviso = { tipo: 'verificar', correo: estado.correo };
+    else if (estado.tipo === 'sin-correo') aviso = { tipo: 'agregar' };
   }
 
   // refetch es estable entre renders: sirve como dependencia de efectos.
