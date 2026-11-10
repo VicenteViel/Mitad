@@ -19,10 +19,12 @@ import { FilaIntegranteGrupo } from '@/features/grupos/components/fila-integrant
 import { contarIntegrantes, etiquetasIntegrante } from '@/features/grupos/resumen-integrantes';
 import { useGrupo } from '@/features/grupos/use-grupo';
 import { FilaPago } from '@/features/saldos/components/fila-pago';
+import { AvisosVencidos } from '@/features/saldos/components/avisos-vencidos';
 import { TarjetaSaldos } from '@/features/saldos/components/tarjeta-saldos';
 import { ordenarMovimientos } from '@/features/saldos/movimientos';
 import type { Deuda } from '@/features/saldos/saldos';
 import { usePagos, useRumisSaldo, useSaldos } from '@/features/saldos/use-saldos';
+import { useVencidos } from '@/features/saldos/use-vencidos';
 import { PALETA } from '@/theme/tema';
 
 export default function GrupoScreen() {
@@ -35,6 +37,7 @@ export default function GrupoScreen() {
   const pagos = usePagos(grupoId);
   const rumis = useRumisSaldo(grupoId);
   const { saldos } = useSaldos(grupoId);
+  const vencidos = useVencidos(grupoId);
 
   const rutaNuevoGasto = `/grupo/${grupoId}/nuevo-gasto` as Href;
   const yo = grupo?.integrantes.find((i) => i.usuarioId === sesion?.user.id);
@@ -126,6 +129,17 @@ export default function GrupoScreen() {
             {grupo.descripcion && <Text style={styles.heroDescripcion}>{grupo.descripcion}</Text>}
             <Text style={styles.heroConteo}>{contarIntegrantes(grupo.integrantes)}</Text>
           </View>
+
+          {/* Lo que tengo vencido (decisión 52) */}
+          <AvisosVencidos
+            vencidos={vencidos}
+            hoy={hoy}
+            nombreRumi={nombreRumi}
+            onAbrirGasto={(gastoId) => router.push(`/grupo/${grupoId}/gasto/${gastoId}` as Href)}
+            onPagar={(acreedor, monto) =>
+              yoSaldo && registrarPago({ deudor: yoSaldo.id, acreedor, monto })
+            }
+          />
 
           {/* Acciones */}
           <View style={styles.acciones}>

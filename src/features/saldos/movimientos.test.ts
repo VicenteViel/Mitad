@@ -14,6 +14,8 @@ function gasto(id: string, fecha: string, creadoEn: string): GastoHistorial {
     eliminado: false,
     pagadoPorId: 'a',
     pagadoPorNombre: 'A',
+    fechaLimite: null,
+    mensual: false,
     participaciones: [],
   };
 }

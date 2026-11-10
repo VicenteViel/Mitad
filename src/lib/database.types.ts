@@ -103,10 +103,12 @@ export type Database = {
           editado_en: string | null
           editado_por: string | null
           fecha: string
+          fecha_limite: string | null
+          gasto_mensual_id: string | null
           grupo_id: string
           id: string
           monto: number
-          pagado_por: string
+          pagado_por: string | null
           tipo_division: string
           version: number
         }
@@ -121,10 +123,12 @@ export type Database = {
           editado_en?: string | null
           editado_por?: string | null
           fecha?: string
+          fecha_limite?: string | null
+          gasto_mensual_id?: string | null
           grupo_id: string
           id?: string
           monto: number
-          pagado_por: string
+          pagado_por?: string | null
           tipo_division: string
           version?: number
         }
@@ -139,14 +143,23 @@ export type Database = {
           editado_en?: string | null
           editado_por?: string | null
           fecha?: string
+          fecha_limite?: string | null
+          gasto_mensual_id?: string | null
           grupo_id?: string
           id?: string
           monto?: number
-          pagado_por?: string
+          pagado_por?: string | null
           tipo_division?: string
           version?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "gastos_gasto_mensual_id_fkey"
+            columns: ["gasto_mensual_id"]
+            isOneToOne: false
+            referencedRelation: "gastos_mensuales"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "gastos_borrado_por_fkey"
             columns: ["borrado_por"]
@@ -177,6 +190,78 @@ export type Database = {
           },
           {
             foreignKeyName: "gastos_pagado_por_fkey"
+            columns: ["pagado_por"]
+            isOneToOne: false
+            referencedRelation: "integrantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gastos_mensuales: {
+        Row: {
+          activo: boolean
+          categoria: string
+          clave_idempotencia: string
+          creado_en: string
+          creado_por: string
+          descripcion: string
+          detenido_en: string | null
+          detenido_por: string | null
+          dia_vencimiento: number
+          grupo_id: string
+          id: string
+          monto: number
+          pagado_por: string | null
+          participantes: Json
+          proximo_mes: string
+          tipo_division: string
+        }
+        Insert: {
+          activo?: boolean
+          categoria: string
+          clave_idempotencia: string
+          creado_en?: string
+          creado_por: string
+          descripcion: string
+          detenido_en?: string | null
+          detenido_por?: string | null
+          dia_vencimiento: number
+          grupo_id: string
+          id?: string
+          monto: number
+          pagado_por?: string | null
+          participantes: Json
+          proximo_mes: string
+          tipo_division: string
+        }
+        Update: {
+          activo?: boolean
+          categoria?: string
+          clave_idempotencia?: string
+          creado_en?: string
+          creado_por?: string
+          descripcion?: string
+          detenido_en?: string | null
+          detenido_por?: string | null
+          dia_vencimiento?: number
+          grupo_id?: string
+          id?: string
+          monto?: number
+          pagado_por?: string | null
+          participantes?: Json
+          proximo_mes?: string
+          tipo_division?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gastos_mensuales_grupo_id_fkey"
+            columns: ["grupo_id"]
+            isOneToOne: false
+            referencedRelation: "grupos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gastos_mensuales_pagado_por_fkey"
             columns: ["pagado_por"]
             isOneToOne: false
             referencedRelation: "integrantes"
@@ -391,16 +476,22 @@ export type Database = {
           gasto_id: string
           integrante_id: string
           monto: number
+          pagada_en: string | null
+          pagada_marcada_por: string | null
         }
         Insert: {
           gasto_id: string
           integrante_id: string
           monto: number
+          pagada_en?: string | null
+          pagada_marcada_por?: string | null
         }
         Update: {
           gasto_id?: string
           integrante_id?: string
           monto?: number
+          pagada_en?: string | null
+          pagada_marcada_por?: string | null
         }
         Relationships: [
           {
@@ -447,13 +538,32 @@ export type Database = {
         Returns: undefined
       }
       crear_invitacion: { Args: { p_integrante_id: string }; Returns: string }
+      crear_gasto_mensual: {
+        Args: {
+          p_categoria: string
+          p_clave_idempotencia: string
+          p_descripcion: string
+          p_dia_vencimiento: number
+          p_grupo_id: string
+          p_monto: number
+          p_pagado_por: string | null
+          p_participantes: Json
+          p_tipo_division: string
+        }
+        Returns: string
+      }
+      detener_gasto_mensual: {
+        Args: { p_gasto_mensual_id: string }
+        Returns: undefined
+      }
       editar_gasto: {
         Args: {
           p_categoria: string
           p_descripcion: string
+          p_fecha_limite: string | null
           p_gasto_id: string
           p_monto: number
-          p_pagado_por: string
+          p_pagado_por: string | null
           p_participantes: Json
           p_tipo_division: string
           p_version: number
@@ -479,6 +589,10 @@ export type Database = {
         Args: { p_liquidacion_id: string }
         Returns: undefined
       }
+      generar_gastos_mensuales: {
+        Args: { p_grupo_id: string }
+        Returns: number
+      }
       es_admin: { Args: { p_grupo_id: string }; Returns: boolean }
       es_integrante: { Args: { p_grupo_id: string }; Returns: boolean }
       hash_codigo_invitacion: { Args: { p_codigo: string }; Returns: string }
@@ -492,6 +606,10 @@ export type Database = {
           p_nombre_integrante: string
         }
         Returns: string
+      }
+      marcar_parte_pagada: {
+        Args: { p_gasto_id: string; p_integrante_id: string; p_pagada: boolean }
+        Returns: undefined
       }
       quitar_integrante: {
         Args: { p_integrante_id: string }
@@ -511,9 +629,10 @@ export type Database = {
           p_clave_idempotencia: string
           p_descripcion: string
           p_fecha: string
+          p_fecha_limite: string | null
           p_grupo_id: string
           p_monto: number
-          p_pagado_por: string
+          p_pagado_por: string | null
           p_participantes: Json
           p_tipo_division: string
         }

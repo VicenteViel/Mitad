@@ -5,6 +5,8 @@ import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useSesion } from '@/features/auth/use-sesion';
+import { hoyLocal } from '@/features/gastos/api';
+import { AjustesGastosMensuales } from '@/features/gastos/components/ajustes-gastos-mensuales';
 import { formatearPesos } from '@/features/gastos/validar-gasto';
 import { accionesSobreRumi } from '@/features/grupos/acciones-rumi';
 import { salirDelGrupo, tomarAdmin } from '@/features/grupos/api-ajustes';
@@ -113,6 +115,8 @@ export default function AjustesGrupoScreen() {
           </View>
 
           {soyAdmin && <AjustesAgregarRumi grupoId={grupoId} />}
+
+          <AjustesGastosMensuales grupoId={grupoId} soyAdmin={soyAdmin} hoy={hoyLocal()} />
 
           {admins.length === 0 && (
             <View style={e.seccion}>

@@ -8,7 +8,7 @@ export type Participacion = { integranteId: string; monto: number };
 export function dividirEquitativo(
   monto: number,
   participantes: string[],
-  pagadorId: string,
+  pagadorId: string | null, // null: gasto por cubrir (el resto va por orden de llegada)
 ): Participacion[] {
   if (!Number.isInteger(monto) || monto <= 0) {
     throw new Error('El monto debe ser un entero mayor que 0');
@@ -25,7 +25,7 @@ export function dividirEquitativo(
 
   const base = Math.floor(monto / participantes.length);
   const resto = monto - base * participantes.length;
-  const pagadorParticipa = participantes.includes(pagadorId);
+  const pagadorParticipa = pagadorId !== null && participantes.includes(pagadorId);
 
   return participantes.map((id, i) => {
     const extra = pagadorParticipa

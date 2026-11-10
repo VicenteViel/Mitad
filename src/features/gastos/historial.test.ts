@@ -10,10 +10,12 @@ const gasto: GastoHistorial = {
   eliminado: false,
   pagadoPorId: 'diego',
   pagadoPorNombre: 'Diego',
+  fechaLimite: null,
+  mensual: false,
   participaciones: [
-    { integranteId: 'diego', monto: 3334 },
-    { integranteId: 'camila', monto: 3333 },
-    { integranteId: 'vicente', monto: 3333 },
+    { integranteId: 'diego', monto: 3334, pagada: false },
+    { integranteId: 'camila', monto: 3333, pagada: false },
+    { integranteId: 'vicente', monto: 3333, pagada: false },
   ],
 };
 
