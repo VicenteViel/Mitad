@@ -29,6 +29,9 @@ Registro de las decisiones de producto y arquitectura. Si una decisión cambia, 
 9. **Una invitación puede re-vincular a un integrante existente** (teléfono perdido, alguien que vuelve). Al re-vincular, el teléfono anterior pierde el acceso.
 9b. **Cada pendiente tiene su propia invitación**, compartible por WhatsApp o QR. Al aceptarla, la persona queda vinculada a ese integrante (conserva nombre, gastos y saldo); no se crea uno nuevo.
 10. **Los links de invitación requieren un dominio propio** (universal links en iOS, app links en Android). Si la app no está instalada, el link muestra una página con los enlaces de descarga.
+10b. **Bienvenida antes del login:** "Soy nuevo" (ingresa y pasa a crear grupo) o "Ya tengo un grupo" (para volver, por ejemplo tras perder el teléfono). Al volver se pregunta si era admin o integrante:
+   - *Admin, o integrante con correo:* ingresa con el mismo correo y recupera sus grupos, porque están vinculados a su cuenta. El código enviado al correo prueba que es la misma persona; la app nunca entrega un grupo solo porque alguien dice haber sido admin.
+   - *Integrante sin correo:* pide al admin un nuevo link de invitación (regla 9).
 
 ### Permisos
 

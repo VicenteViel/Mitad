@@ -23,6 +23,8 @@ export default function RootLayout() {
       <ThemeProvider value={temaRumi}>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Protected guard={!sesion}>
+            <Stack.Screen name="bienvenida" />
+            <Stack.Screen name="recuperar" />
             <Stack.Screen name="ingresar" />
           </Stack.Protected>
           <Stack.Protected guard={!!sesion}>

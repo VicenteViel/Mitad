@@ -1,12 +1,22 @@
-import { Link, useTheme } from 'expo-router';
+import { Link, router, useTheme } from 'expo-router';
+import { useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { consumirIntencion } from '@/features/auth/intencion';
 import { useSesion } from '@/features/auth/use-sesion';
 import { supabase } from '@/lib/supabase';
 
 export default function HomeScreen() {
   const { sesion } = useSesion();
   const { colors } = useTheme();
+
+  // Quien eligió "Soy nuevo" en la bienvenida va directo a crear su grupo.
+  useEffect(() => {
+    if (consumirIntencion() === 'crear-grupo') {
+      router.push('/crear-grupo');
+    }
+  }, []);
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Text style={[styles.title, { color: colors.primary }]}>Rumi</Text>
