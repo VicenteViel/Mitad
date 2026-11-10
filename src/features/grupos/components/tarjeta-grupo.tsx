@@ -1,21 +1,23 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { PALETA } from '@/theme/tema';
 
 import type { GrupoResumen } from '../api';
 
 // Tarjeta de un grupo en Inicio: inicial del grupo, nombre, descripción y
-// cantidad de integrantes.
-export function TarjetaGrupo({ grupo }: { grupo: GrupoResumen }) {
+// cantidad de integrantes. Al tocarla se abre el grupo.
+export function TarjetaGrupo({ grupo, onPress }: { grupo: GrupoResumen; onPress: () => void }) {
   const inicial = grupo.nombre.trim().charAt(0).toUpperCase() || '?';
   const integrantes =
     grupo.cantidadIntegrantes === 1 ? '1 integrante' : `${grupo.cantidadIntegrantes} integrantes`;
 
   return (
-    <View
-      style={styles.tarjeta}
-      accessible
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.tarjeta, pressed && styles.presionada]}
+      accessibilityRole="button"
       accessibilityLabel={`${grupo.nombre}, ${integrantes}`}
+      accessibilityHint="Abre el grupo"
     >
       <View style={styles.inicial}>
         <Text style={styles.inicialTexto}>{inicial}</Text>
@@ -32,11 +34,12 @@ export function TarjetaGrupo({ grupo }: { grupo: GrupoResumen }) {
         <Text style={styles.integrantes}>{integrantes}</Text>
       </View>
       <Text style={styles.flecha}>›</Text>
-    </View>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
+  presionada: { opacity: 0.85, transform: [{ scale: 0.99 }] },
   tarjeta: {
     flexDirection: 'row',
     alignItems: 'center',

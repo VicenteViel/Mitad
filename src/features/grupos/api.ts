@@ -2,6 +2,7 @@ import type { Json } from '@/lib/database.types';
 import { esperar, SIMULAR_GUARDADO } from '@/lib/desarrollo';
 import { supabase } from '@/lib/supabase';
 
+import type { Avatar, Color } from './apariencia';
 import type { BorradorGrupo } from './borrador-grupo';
 
 // Crea el grupo completo en una sola transacción: el grupo, quien lo crea
@@ -34,6 +35,53 @@ export async function iniciarGrupo(borrador: BorradorGrupo): Promise<string> {
   }
 
   return data;
+}
+
+export type IntegranteDetalle = {
+  id: string;
+  nombre: string;
+  rol: 'admin' | 'integrante';
+  avatar: Avatar;
+  color: Color;
+  // Vacío = pendiente (no ha aceptado su invitación).
+  usuarioId: string | null;
+};
+
+export type GrupoDetalle = {
+  id: string;
+  nombre: string;
+  descripcion: string | null;
+  integrantes: IntegranteDetalle[];
+};
+
+// Un grupo con sus integrantes actuales (activos y pendientes), por orden de
+// llegada. RLS solo lo devuelve si soy integrante; si no, no llega nada.
+export async function obtenerGrupo(grupoId: string): Promise<GrupoDetalle> {
+  const { data, error } = await supabase
+    .from('grupos')
+    .select('id, nombre, descripcion, integrantes(id, nombre, rol, avatar, color, usuario_id)')
+    .eq('id', grupoId)
+    .is('integrantes.salio_en', null)
+    .order('unido_en', { referencedTable: 'integrantes', ascending: true })
+    .single();
+
+  if (error) {
+    throw new Error(`Error al cargar el grupo: ${error.message}`);
+  }
+
+  return {
+    id: data.id,
+    nombre: data.nombre,
+    descripcion: data.descripcion,
+    integrantes: data.integrantes.map((i) => ({
+      id: i.id,
+      nombre: i.nombre,
+      rol: i.rol === 'admin' ? 'admin' : 'integrante',
+      avatar: i.avatar === 'mujer' ? 'mujer' : 'hombre',
+      color: i.color === 'rosado' ? 'rosado' : 'azul',
+      usuarioId: i.usuario_id,
+    })),
+  };
 }
 
 export type GrupoResumen = {
