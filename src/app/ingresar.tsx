@@ -1,6 +1,6 @@
-import { router, useTheme } from 'expo-router';
+import { useTheme } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { PantallaFormulario } from '@/components/pantalla-formulario';
 import { supabase } from '@/lib/supabase';
@@ -57,10 +57,13 @@ export default function IngresarScreen() {
   return (
     <PantallaFormulario>
       <Text style={[styles.title, { color: colors.primary }]}>Rumi</Text>
+      <Text style={styles.subtitulo}>
+        {paso === 'correo' ? 'Ingresa con tu correo' : 'Revisa tu correo'}
+      </Text>
 
       {paso === 'correo' ? (
         <>
-          <Text style={[styles.label, { color: colors.text }]}>Tu correo</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Correo</Text>
           <TextInput
             style={inputStyle}
             value={correo}
@@ -122,17 +125,25 @@ export default function IngresarScreen() {
         </Pressable>
       )}
 
-      {paso === 'correo' && router.canGoBack() && (
-        <Pressable onPress={() => router.back()} accessibilityRole="button">
-          <Text style={[styles.link, { color: colors.primary }]}>Volver</Text>
-        </Pressable>
+      {/* Quien era integrante sin correo no puede volver por aquí: necesita un link nuevo. */}
+      {paso === 'correo' && (
+        <View style={styles.nota}>
+          <Text style={styles.notaTitulo}>¿Eras parte de un grupo y nunca registraste tu correo?</Text>
+          <Text style={styles.notaTexto}>
+            Pídele al administrador un nuevo link de invitación para recuperar tu lugar.
+          </Text>
+        </View>
       )}
     </PantallaFormulario>
   );
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 40, fontWeight: '700', textAlign: 'center', marginBottom: 16 },
+  title: { fontSize: 40, fontWeight: '700', textAlign: 'center' },
+  subtitulo: { fontSize: 16, color: PALETA.textoSuave, textAlign: 'center', marginBottom: 12 },
+  nota: { backgroundColor: PALETA.lilaClaro, borderRadius: 14, padding: 14, gap: 4, marginTop: 8 },
+  notaTitulo: { fontSize: 14, fontWeight: '700', color: PALETA.moradoOscuro },
+  notaTexto: { fontSize: 14, color: PALETA.textoSuave, lineHeight: 20 },
   label: { fontSize: 16 },
   input: { borderWidth: 1, borderRadius: 12, padding: 14, fontSize: 18 },
   error: { color: PALETA.error, fontSize: 14 },
