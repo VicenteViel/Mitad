@@ -19,7 +19,20 @@ function gasto(id: string, fecha: string, creadoEn: string): GastoHistorial {
 }
 
 function pago(id: string, fecha: string, creadoEn: string): Pago {
-  return { id, de: 'b', a: 'a', monto: 500, fecha, creadoEn, eliminado: false, declaradaPor: 'b' };
+  return {
+    id,
+    de: 'b',
+    a: 'a',
+    monto: 500,
+    fecha,
+    creadoEn,
+    eliminado: false,
+    declaradaPor: 'b',
+    version: 1,
+    editadoPor: null,
+    editadoEn: null,
+    eliminadoPor: null,
+  };
 }
 
 describe('ordenarMovimientos', () => {

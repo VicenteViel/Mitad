@@ -18,10 +18,19 @@ export type GastoDetalle = {
   pagadoPorNombre: string;
   creadoPorNombre: string;
   creadoEn: string;
+  // Para editar sin pisar a otro admin (decisión 32).
+  version: number;
+  editadoPorNombre: string | null;
+  editadoEn: string | null;
+  eliminadoPorNombre: string | null;
   participaciones: { integranteId: string; nombre: string; monto: number }[];
 };
 
 type FilaDetalle = {
+  version: number;
+  editado_en: string | null;
+  editor: { nombre: string } | null;
+  borrador: { nombre: string } | null;
   id: string;
   grupo_id: string;
   descripcion: string;
@@ -42,9 +51,11 @@ export async function obtenerDetalleGasto(gastoId: string): Promise<GastoDetalle
     .from('gastos')
     .select(
       'id, grupo_id, descripcion, monto, categoria, fecha, tipo_division, borrado_en, ' +
-        'pagado_por, creado_en, ' +
+        'pagado_por, creado_en, version, editado_en, ' +
         'pagador:integrantes!gastos_pagado_por_fkey(nombre), ' +
         'creador:integrantes!gastos_creado_por_fkey(nombre), ' +
+        'editor:integrantes!gastos_editado_por_fkey(nombre), ' +
+        'borrador:integrantes!gastos_borrado_por_fkey(nombre), ' +
         'participaciones(integrante_id, monto, integrante:integrantes(nombre))',
     )
     .eq('id', gastoId)
@@ -68,6 +79,10 @@ export async function obtenerDetalleGasto(gastoId: string): Promise<GastoDetalle
     pagadoPorNombre: g.pagador?.nombre ?? 'Alguien',
     creadoPorNombre: g.creador?.nombre ?? 'Alguien',
     creadoEn: g.creado_en,
+    version: g.version,
+    editadoPorNombre: g.editor?.nombre ?? null,
+    editadoEn: g.editado_en,
+    eliminadoPorNombre: g.borrador?.nombre ?? null,
     participaciones: g.participaciones
       .map((p) => ({
         integranteId: p.integrante_id,
@@ -76,6 +91,52 @@ export async function obtenerDetalleGasto(gastoId: string): Promise<GastoDetalle
       }))
       .sort((a, b) => b.monto - a.monto || a.nombre.localeCompare(b.nombre)),
   };
+}
+
+export type CambiosGasto = {
+  gastoId: string;
+  grupoId: string;
+  version: number;
+  descripcion: string;
+  monto: number;
+  categoria: Categoria;
+  pagadoPor: string;
+  tipoDivision: TipoDivision;
+  participaciones: { integranteId: string; monto: number }[];
+};
+
+// Mensajes del servidor que se pueden mostrar tal cual.
+function mensajeServidor(mensaje: string, porDefecto: string): string {
+  return /Otro admin modificó|Solo un admin|está eliminado/.test(mensaje) ? mensaje : porDefecto;
+}
+
+// Solo admins. Si otro admin lo cambió antes (versión distinta), falla con un
+// mensaje que pide recargar.
+export async function editarGasto(cambios: CambiosGasto): Promise<void> {
+  const { error } = await supabase.rpc('editar_gasto', {
+    p_gasto_id: cambios.gastoId,
+    p_version: cambios.version,
+    p_descripcion: cambios.descripcion,
+    p_monto: cambios.monto,
+    p_categoria: cambios.categoria,
+    p_pagado_por: cambios.pagadoPor,
+    p_tipo_division: cambios.tipoDivision,
+    p_participantes: cambios.participaciones.map((p) => ({
+      integrante_id: p.integranteId,
+      monto: p.monto,
+    })),
+  });
+  if (error) {
+    throw new Error(mensajeServidor(error.message, 'No pudimos guardar los cambios.'));
+  }
+}
+
+// Borrado lógico: queda en el historial como "eliminado" y no cuenta.
+export async function eliminarGasto(gastoId: string): Promise<void> {
+  const { error } = await supabase.rpc('eliminar_gasto', { p_gasto_id: gastoId });
+  if (error) {
+    throw new Error(mensajeServidor(error.message, 'No pudimos eliminar el gasto.'));
+  }
 }
 
 export type EvidenciaGasto = {

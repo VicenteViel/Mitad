@@ -6,6 +6,9 @@ import { Chip } from '@/components/chip';
 import { PantallaFormulario } from '@/components/pantalla-formulario';
 import { hoyLocal, nuevaClaveIdempotencia } from '@/features/gastos/api';
 import { dividirEquitativo, type Participacion } from '@/features/gastos/division';
+import type { DatosIntegrantesGasto } from '@/features/gastos/api';
+import type { GastoDetalle } from '@/features/gastos/api-detalle';
+import { useDetalleGasto, useEditarGasto } from '@/features/gastos/use-detalle-gasto';
 import { useIntegrantesGasto, useRegistrarGasto } from '@/features/gastos/use-registrar-gasto';
 import {
   CATEGORIAS,
@@ -20,39 +23,76 @@ import {
 import { SIMULAR_GUARDADO } from '@/lib/desarrollo';
 import { PALETA } from '@/theme/tema';
 
+// Nuevo gasto, o editar uno existente con ?editar=<gastoId> (solo admins).
 export default function NuevoGastoScreen() {
   const { colors } = useTheme();
-  const { id: grupoId } = useLocalSearchParams<{ id: string }>();
-  const { data, isLoading, error: errorCarga } = useIntegrantesGasto(grupoId);
-  const { mutate, isPending, error } = useRegistrarGasto();
+  const { id: grupoId, editar } = useLocalSearchParams<{ id: string; editar?: string }>();
+  const integrantes = useIntegrantesGasto(grupoId);
+  const original = useDetalleGasto(editar ?? '');
 
-  const [descripcion, setDescripcion] = useState('');
-  const [monto, setMonto] = useState('');
-  const [categoria, setCategoria] = useState<Categoria>('otros');
-  const [pagadoPorElegido, setPagadoPor] = useState<string | null>(null);
-  // Se guardan los desmarcados: así todos parten marcados (regla 34).
-  const [desmarcados, setDesmarcados] = useState<Set<string>>(new Set());
-  const [tipoDivision, setTipoDivision] = useState<TipoDivision>('equitativa');
-  const [montosPersonalizados, setMontosPersonalizados] = useState<Record<string, string>>({});
-  const [errores, setErrores] = useState<ErroresGasto>({});
-  // Una clave por formulario: si "Guardar" se toca de nuevo tras un error de
-  // red, el servidor reconoce el reintento y no duplica el gasto.
-  const [clave] = useState(nuevaClaveIdempotencia);
-
-  if (isLoading) {
+  const cargando = integrantes.isLoading || (!!editar && original.isLoading);
+  if (cargando) {
     return (
       <PantallaFormulario>
         <ActivityIndicator color={colors.primary} />
       </PantallaFormulario>
     );
   }
-  if (errorCarga || !data) {
+  if (integrantes.error || !integrantes.data || (editar && !original.data)) {
     return (
       <PantallaFormulario>
         <Text style={styles.error}>No pudimos cargar el grupo. Vuelve a intentarlo.</Text>
       </PantallaFormulario>
     );
   }
+
+  return (
+    <FormularioGasto
+      grupoId={grupoId}
+      datos={integrantes.data}
+      original={editar ? original.data : undefined}
+    />
+  );
+}
+
+type FormularioProps = {
+  grupoId: string;
+  datos: DatosIntegrantesGasto;
+  original?: GastoDetalle;
+};
+
+function FormularioGasto({ grupoId, datos: data, original }: FormularioProps) {
+  const { colors } = useTheme();
+  const registrar = useRegistrarGasto();
+  const editarGasto = useEditarGasto();
+  const { isPending, error } = original ? editarGasto : registrar;
+
+  const personalizada = original?.tipoDivision === 'personalizada';
+  const [descripcion, setDescripcion] = useState(original?.descripcion ?? '');
+  const [monto, setMonto] = useState(original ? formatearPesos(original.monto).slice(1) : '');
+  const [categoria, setCategoria] = useState<Categoria>(original?.categoria ?? 'otros');
+  const [pagadoPorElegido, setPagadoPor] = useState<string | null>(original?.pagadoPorId ?? null);
+  // Se guardan los desmarcados: así todos parten marcados (regla 34). Al
+  // editar, parten desmarcados quienes no estaban en el gasto.
+  const [desmarcados, setDesmarcados] = useState<Set<string>>(() => {
+    if (!original) return new Set();
+    const participan = new Set(original.participaciones.map((p) => p.integranteId));
+    return new Set(data.integrantes.filter((i) => !participan.has(i.id)).map((i) => i.id));
+  });
+  const [tipoDivision, setTipoDivision] = useState<TipoDivision>(
+    original?.tipoDivision ?? 'equitativa',
+  );
+  const [montosPersonalizados, setMontosPersonalizados] = useState<Record<string, string>>(() =>
+    personalizada && original
+      ? Object.fromEntries(
+          original.participaciones.map((p) => [p.integranteId, formatearPesos(p.monto).slice(1)]),
+        )
+      : {},
+  );
+  const [errores, setErrores] = useState<ErroresGasto>({});
+  // Una clave por formulario: si "Guardar" se toca de nuevo tras un error de
+  // red, el servidor reconoce el reintento y no duplica el gasto.
+  const [clave] = useState(nuevaClaveIdempotencia);
 
   const { integrantes, soyAdmin } = data;
   const pagadoPor = pagadoPorElegido ?? integrantes.find((i) => i.esYo)?.id ?? null;
@@ -99,7 +139,25 @@ export default function NuevoGastoScreen() {
             monto: leerMonto(montosPersonalizados[id] ?? '') ?? 0,
           }));
 
-    mutate(
+    if (original) {
+      editarGasto.mutate(
+        {
+          gastoId: original.id,
+          grupoId,
+          version: original.version,
+          descripcion: descripcion.trim(),
+          monto: montoLeido,
+          categoria,
+          pagadoPor,
+          tipoDivision,
+          participaciones,
+        },
+        { onSuccess: () => router.back() },
+      );
+      return;
+    }
+
+    registrar.mutate(
       {
         grupoId,
         descripcion: descripcion.trim(),
@@ -119,7 +177,9 @@ export default function NuevoGastoScreen() {
 
   return (
     <PantallaFormulario>
-      <Text style={[styles.title, { color: colors.primary }]}>Nuevo gasto</Text>
+      <Text style={[styles.title, { color: colors.primary }]}>
+        {original ? 'Editar gasto' : 'Nuevo gasto'}
+      </Text>
       {SIMULAR_GUARDADO && (
         <Text style={styles.modoPrueba}>Modo prueba: el gasto no se guardará en Supabase</Text>
       )}
@@ -235,7 +295,11 @@ export default function NuevoGastoScreen() {
       {errores.participantes && <Text style={styles.error}>{errores.participantes}</Text>}
       {errores.personalizada && <Text style={styles.error}>{errores.personalizada}</Text>}
 
-      {error && <Text style={styles.error}>No pudimos guardar el gasto. Intenta de nuevo.</Text>}
+      {error && (
+        <Text style={styles.error}>
+          {original ? error.message : 'No pudimos guardar el gasto. Intenta de nuevo.'}
+        </Text>
+      )}
 
       <Pressable
         style={[styles.button, { backgroundColor: colors.primary, opacity: isPending ? 0.6 : 1 }]}

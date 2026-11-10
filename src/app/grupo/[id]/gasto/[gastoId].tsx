@@ -15,7 +15,12 @@ import { useSesion } from '@/features/auth/use-sesion';
 import { hoyLocal } from '@/features/gastos/api';
 import { SeccionEvidencia } from '@/features/gastos/components/seccion-evidencia';
 import { etiquetaCategoria, iconoCategoria, textoFecha } from '@/features/gastos/historial';
-import { useDetalleGasto, useEvidencias } from '@/features/gastos/use-detalle-gasto';
+import { AccionesAdmin } from '@/components/acciones-admin';
+import {
+  useDetalleGasto,
+  useEliminarGasto,
+  useEvidencias,
+} from '@/features/gastos/use-detalle-gasto';
 import { formatearPesos } from '@/features/gastos/validar-gasto';
 import { useGrupo } from '@/features/grupos/use-grupo';
 import { PALETA } from '@/theme/tema';
@@ -29,8 +34,10 @@ export default function DetalleGastoScreen() {
   const { data: grupo } = useGrupo(id ?? '');
   const { data: gasto, isPending, isError, refetch, isRefetching } = useDetalleGasto(gastoId ?? '');
   const evidencias = useEvidencias({ tipo: 'gasto', id: gastoId ?? '' });
+  const eliminar = useEliminarGasto(id ?? '');
 
   const yo = grupo?.integrantes.find((i) => i.usuarioId === sesion?.user.id);
+  const soyAdmin = yo?.rol === 'admin';
   const hoy = hoyLocal();
 
   return (
@@ -115,6 +122,32 @@ export default function DetalleGastoScreen() {
           <Text style={styles.registro}>
             Registrado por {gasto.creadoPorNombre} · {textoFecha(gasto.creadoEn.slice(0, 10), hoy)}
           </Text>
+          {gasto.editadoEn && (
+            <Text style={styles.registro}>
+              Editado por {gasto.editadoPorNombre ?? 'un admin'} ·{' '}
+              {textoFecha(gasto.editadoEn.slice(0, 10), hoy)}
+            </Text>
+          )}
+          {gasto.eliminado && gasto.eliminadoPorNombre && (
+            <Text style={styles.registro}>Eliminado por {gasto.eliminadoPorNombre}</Text>
+          )}
+
+          {soyAdmin && !gasto.eliminado && (
+            <AccionesAdmin
+              que="gasto"
+              onEditar={() =>
+                router.push({
+                  pathname: '/grupo/[id]/nuevo-gasto',
+                  params: { id: gasto.grupoId, editar: gasto.id },
+                })
+              }
+              onEliminar={() =>
+                eliminar.mutate(gasto.id, { onSuccess: () => router.back() })
+              }
+              eliminando={eliminar.isPending}
+              error={eliminar.error?.message}
+            />
+          )}
 
           {/* Evidencia */}
           <SeccionEvidencia

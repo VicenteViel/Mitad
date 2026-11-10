@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useGastos } from '@/features/gastos/use-registrar-gasto';
 
-import { obtenerPagos, obtenerRumisSaldo, registrarPago } from './api';
+import { editarPago, eliminarPago, obtenerPagos, obtenerRumisSaldo, registrarPago } from './api';
 import { calcularSaldos, type Saldos } from './saldos';
 
 export function clavePagos(grupoId: string) {
@@ -64,5 +64,24 @@ export function useRegistrarPago() {
     retry: false,
     onSuccess: (_id, pago) =>
       queryClient.invalidateQueries({ queryKey: clavePagos(pago.grupoId) }),
+  });
+}
+
+export function useEditarPago() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: editarPago,
+    retry: false,
+    onSuccess: (_r, cambios) =>
+      queryClient.invalidateQueries({ queryKey: clavePagos(cambios.grupoId) }),
+  });
+}
+
+export function useEliminarPago(grupoId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: eliminarPago,
+    retry: false,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: clavePagos(grupoId) }),
   });
 }

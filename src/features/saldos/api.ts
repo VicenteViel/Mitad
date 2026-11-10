@@ -36,12 +36,18 @@ export type Pago = {
   creadoEn: string;
   eliminado: boolean;
   declaradaPor: string;
+  version: number;
+  editadoPor: string | null;
+  editadoEn: string | null;
+  eliminadoPor: string | null;
 };
 
 export async function obtenerPagos(grupoId: string): Promise<Pago[]> {
   const { data, error } = await supabase
     .from('liquidaciones')
-    .select('id, de, a, monto, fecha, creado_en, borrado_en, declarada_por')
+    .select(
+      'id, de, a, monto, fecha, creado_en, borrado_en, borrado_por, declarada_por, version, editado_por, editado_en',
+    )
     .eq('grupo_id', grupoId)
     .order('fecha', { ascending: false })
     .order('creado_en', { ascending: false });
@@ -59,7 +65,45 @@ export async function obtenerPagos(grupoId: string): Promise<Pago[]> {
     creadoEn: l.creado_en,
     eliminado: l.borrado_en !== null,
     declaradaPor: l.declarada_por,
+    version: l.version,
+    editadoPor: l.editado_por,
+    editadoEn: l.editado_en,
+    eliminadoPor: l.borrado_por,
   }));
+}
+
+export type CambiosPago = {
+  pagoId: string;
+  grupoId: string;
+  version: number;
+  de: string;
+  a: string;
+  monto: number;
+};
+
+function mensajeServidor(mensaje: string, porDefecto: string): string {
+  return /Otro admin modificó|Solo un admin|está eliminado/.test(mensaje) ? mensaje : porDefecto;
+}
+
+// Solo admins (decisión 14). Si otro admin lo cambió antes, pide recargar.
+export async function editarPago(cambios: CambiosPago): Promise<void> {
+  const { error } = await supabase.rpc('editar_liquidacion', {
+    p_liquidacion_id: cambios.pagoId,
+    p_version: cambios.version,
+    p_de: cambios.de,
+    p_a: cambios.a,
+    p_monto: cambios.monto,
+  });
+  if (error) {
+    throw new Error(mensajeServidor(error.message, 'No pudimos guardar los cambios.'));
+  }
+}
+
+export async function eliminarPago(pagoId: string): Promise<void> {
+  const { error } = await supabase.rpc('eliminar_liquidacion', { p_liquidacion_id: pagoId });
+  if (error) {
+    throw new Error(mensajeServidor(error.message, 'No pudimos eliminar el pago.'));
+  }
 }
 
 export type NuevoPago = {
