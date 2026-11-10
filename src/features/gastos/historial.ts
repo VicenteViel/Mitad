@@ -14,6 +14,11 @@ export type GastoHistorial = {
   pagadoPorNombre: string | null;
   fechaLimite: string | null; // YYYY-MM-DD
   mensual: boolean;
+  // Para el historial detallado: quién registró, editó o eliminó, y cuándo.
+  creadoPorId: string;
+  editadoPorId: string | null;
+  editadoEn: string | null;
+  eliminadoPorId: string | null;
   // `pagada` solo aplica a gastos por cubrir.
   participaciones: { integranteId: string; monto: number; pagada: boolean }[];
 };

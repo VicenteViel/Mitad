@@ -147,6 +147,7 @@ export async function obtenerGastos(grupoId: string): Promise<GastoHistorial[]> 
     .from('gastos')
     .select(
       'id, descripcion, monto, categoria, fecha, fecha_limite, gasto_mensual_id, creado_en, ' +
+        'creado_por, editado_por, editado_en, borrado_por, ' +
         'borrado_en, pagado_por, pagador:integrantes!gastos_pagado_por_fkey(nombre), ' +
         'participaciones(integrante_id, monto, pagada_en)',
     )
@@ -170,6 +171,10 @@ export async function obtenerGastos(grupoId: string): Promise<GastoHistorial[]> 
     pagadoPorNombre: g.pagado_por ? (g.pagador?.nombre ?? 'Alguien') : null,
     fechaLimite: g.fecha_limite,
     mensual: g.gasto_mensual_id !== null,
+    creadoPorId: g.creado_por,
+    editadoPorId: g.editado_por,
+    editadoEn: g.editado_en,
+    eliminadoPorId: g.borrado_por,
     participaciones: g.participaciones.map((p) => ({
       integranteId: p.integrante_id,
       monto: p.monto,
@@ -252,6 +257,10 @@ type FilaGasto = {
   fecha: string;
   fecha_limite: string | null;
   gasto_mensual_id: string | null;
+  creado_por: string;
+  editado_por: string | null;
+  editado_en: string | null;
+  borrado_por: string | null;
   creado_en: string;
   borrado_en: string | null;
   pagado_por: string | null;

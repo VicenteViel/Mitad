@@ -69,3 +69,25 @@ export function fechaLarga(fecha: string, hoy: string): string {
   const base = `${dia} de ${MESES_LARGOS[mes - 1]}`;
   return anio === leerFecha(hoy).anio ? base : `${base} de ${anio}`;
 }
+
+const DIAS_SEMANA = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+
+// Encabezado de un día en el historial: "Hoy", "Ayer" o "lunes 9 de noviembre".
+export function fechaConDia(fecha: string, hoy: string): string {
+  if (fecha === hoy) return 'Hoy';
+  const h = leerFecha(hoy);
+  const ayer = new Date(h.anio, h.mes - 1, h.dia - 1);
+  const { anio, mes, dia } = leerFecha(fecha);
+  if (anio === ayer.getFullYear() && mes === ayer.getMonth() + 1 && dia === ayer.getDate()) {
+    return 'Ayer';
+  }
+  const semana = DIAS_SEMANA[new Date(anio, mes - 1, dia).getDay()];
+  return `${semana} ${fechaLarga(fecha, hoy)}`;
+}
+
+// Fecha y hora locales de un instante ISO: "9 nov · 14:35".
+export function fechaYHora(instante: string, hoy: string): string {
+  const d = new Date(instante);
+  const fecha = aTexto(d.getFullYear(), d.getMonth() + 1, d.getDate());
+  return `${fechaCorta(fecha, hoy)} · ${dos(d.getHours())}:${dos(d.getMinutes())}`;
+}
