@@ -2,7 +2,7 @@ import type { Json } from '@/lib/database.types';
 import { esperar, SIMULAR_GUARDADO } from '@/lib/desarrollo';
 import { supabase } from '@/lib/supabase';
 
-import type { Avatar, Color } from './apariencia';
+import { leerColor, type Avatar, type Color } from './apariencia';
 import type { BorradorGrupo } from './borrador-grupo';
 
 // Crea el grupo completo en una sola transacción: el grupo, quien lo crea
@@ -79,7 +79,7 @@ export async function obtenerGrupo(grupoId: string): Promise<GrupoDetalle> {
       nombre: i.nombre,
       rol: i.rol === 'admin' ? 'admin' : 'integrante',
       avatar: i.avatar === 'mujer' ? 'mujer' : 'hombre',
-      color: i.color === 'rosado' ? 'rosado' : 'azul',
+      color: leerColor(i.color, i.avatar === 'mujer' ? 'mujer' : 'hombre'),
       usuarioId: i.usuario_id,
       alias: i.alias,
     })),

@@ -49,7 +49,11 @@ export function FilaIntegrante({ integrante, etiqueta, error, onChange, onQuitar
 
       <View style={styles.apariencia}>
         <SelectorAvatar compacto value={integrante.avatar} onChange={(avatar) => onChange({ avatar })} />
-        <SelectorColor value={integrante.color} onChange={(color) => onChange({ color })} />
+        <SelectorColor
+          value={integrante.color}
+          colores={['azul', 'rosado']}
+          onChange={(color) => onChange({ color })}
+        />
       </View>
     </View>
   );
