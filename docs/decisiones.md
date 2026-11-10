@@ -35,6 +35,7 @@ Registro de las decisiones de producto y arquitectura. Si una decisión cambia, 
    - *Integrante que nunca registró correo:* pide al admin un nuevo link de invitación (regla 9); la pantalla de ingreso lo indica.
    - El alias no sirve para recuperar el acceso: no es secreto ni único.
 10c. **Al aceptar una invitación:** pantalla "¡Te has unido a un grupo!" (nombre y descripción del grupo) y luego "Tus datos": foto de perfil (próximamente; cambia la regla 38), nombre puesto por el admin y **no editable**, **apodo** opcional y **correo opcional**. Si no deja correo, se le advierte y en Inicio queda el aviso "Agrega tu correo"; si lo deja, queda "Verifica tu correo" hasta confirmarlo. El correo es su forma de recuperar el lugar en el grupo.
+10d. **Cómo funciona una invitación:** el admin toca "Invitar" en un rumi pendiente y obtiene un **código de 10 caracteres** (XXXXX-XXXXX, sin letras confusas), un **QR** con el link y un botón para compartir. Crear una invitación nueva anula la anterior de ese pendiente. Quien la recibe abre el link o escribe el código en "Me invitaron"; si no tiene sesión, entra **sin correo** (sesión anónima de Supabase, que hay que activar en el panel). Al aceptar queda vinculado a ese pendiente, siempre como integrante. En desarrollo el link es `exp://…` (Expo Go); en la app publicada será `https://` con dominio propio (regla 10).
 
 ### Permisos
 
