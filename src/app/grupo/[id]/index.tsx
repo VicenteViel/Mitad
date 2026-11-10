@@ -18,6 +18,11 @@ import { useGastos } from '@/features/gastos/use-registrar-gasto';
 import { FilaIntegranteGrupo } from '@/features/grupos/components/fila-integrante-grupo';
 import { contarIntegrantes, etiquetasIntegrante } from '@/features/grupos/resumen-integrantes';
 import { useGrupo } from '@/features/grupos/use-grupo';
+import { FilaPago } from '@/features/saldos/components/fila-pago';
+import { TarjetaSaldos } from '@/features/saldos/components/tarjeta-saldos';
+import { ordenarMovimientos } from '@/features/saldos/movimientos';
+import type { Deuda } from '@/features/saldos/saldos';
+import { usePagos, useRumisSaldo, useSaldos } from '@/features/saldos/use-saldos';
 import { PALETA } from '@/theme/tema';
 
 export default function GrupoScreen() {
@@ -27,11 +32,38 @@ export default function GrupoScreen() {
   const { sesion } = useSesion();
   const { data: grupo, isPending, isError, refetch, isRefetching } = useGrupo(grupoId);
   const gastos = useGastos(grupoId);
+  const pagos = usePagos(grupoId);
+  const rumis = useRumisSaldo(grupoId);
+  const { saldos } = useSaldos(grupoId);
 
   const rutaNuevoGasto = `/grupo/${grupoId}/nuevo-gasto` as Href;
   const yo = grupo?.integrantes.find((i) => i.usuarioId === sesion?.user.id);
+  const yoSaldo = rumis.data?.find((r) => r.usuarioId === sesion?.user.id);
   const soyAdmin = yo?.rol === 'admin';
   const hoy = hoyLocal();
+
+  const nombreRumi = (integranteId: string) =>
+    integranteId === yo?.id
+      ? 'Tú'
+      : (rumis.data?.find((r) => r.id === integranteId)?.nombre ?? 'Ex-rumi');
+  const movimientos =
+    gastos.data && pagos.data ? ordenarMovimientos(gastos.data, pagos.data) : undefined;
+
+  function registrarPago(deuda?: Deuda) {
+    router.push({
+      pathname: '/grupo/[id]/pago/nuevo',
+      params: deuda
+        ? { id: grupoId, de: deuda.deudor, a: deuda.acreedor, monto: String(deuda.monto) }
+        : { id: grupoId },
+    });
+  }
+
+  function recargarTodo() {
+    void refetch();
+    void gastos.refetch();
+    void pagos.refetch();
+    void rumis.refetch();
+  }
 
   return (
     <ScrollView
@@ -39,11 +71,8 @@ export default function GrupoScreen() {
       contentContainerStyle={[styles.contenido, { paddingTop: insets.top + 8 }]}
       refreshControl={
         <RefreshControl
-          refreshing={isRefetching || gastos.isRefetching}
-          onRefresh={() => {
-            void refetch();
-            void gastos.refetch();
-          }}
+          refreshing={isRefetching || gastos.isRefetching || pagos.isRefetching}
+          onRefresh={recargarTodo}
           tintColor={PALETA.morado}
         />
       }
@@ -95,22 +124,35 @@ export default function GrupoScreen() {
               <Text style={styles.accionIcono}>＋</Text>
               <Text style={styles.accionPrincipalTexto}>Agregar gasto</Text>
             </Pressable>
+            <Pressable
+              onPress={() => registrarPago()}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.accion, styles.accionSecundaria, pressed && styles.presionado]}
+            >
+              <Text style={styles.accionSecundariaTexto}>💸 Registrar pago</Text>
+            </Pressable>
           </View>
 
-          {/* Gastos: historial del grupo */}
-          <Text style={styles.seccion}>Gastos</Text>
-          {gastos.isPending && <ActivityIndicator color={PALETA.morado} />}
-          {gastos.isError && (
-            <Pressable
-              onPress={() => gastos.refetch()}
-              accessibilityRole="button"
-              style={styles.error}
-            >
-              <Text style={styles.errorTitulo}>No pudimos cargar los gastos</Text>
+          {/* Saldos: quién le debe a quién */}
+          {saldos && rumis.data && (
+            <TarjetaSaldos
+              saldos={saldos}
+              rumis={rumis.data}
+              yo={yoSaldo}
+              onRegistrarPago={registrarPago}
+            />
+          )}
+
+          {/* Historial: gastos y pagos */}
+          <Text style={styles.seccion}>Movimientos</Text>
+          {(gastos.isPending || pagos.isPending) && <ActivityIndicator color={PALETA.morado} />}
+          {(gastos.isError || pagos.isError) && (
+            <Pressable onPress={recargarTodo} accessibilityRole="button" style={styles.error}>
+              <Text style={styles.errorTitulo}>No pudimos cargar los movimientos</Text>
               <Text style={styles.errorTexto}>Toca para intentar de nuevo.</Text>
             </Pressable>
           )}
-          {gastos.data?.length === 0 && (
+          {movimientos?.length === 0 && (
             <View style={styles.vacio}>
               <Text style={styles.vacioTitulo}>Todavía no hay gastos</Text>
               <Text style={styles.vacioTexto}>
@@ -118,17 +160,26 @@ export default function GrupoScreen() {
               </Text>
             </View>
           )}
-          {gastos.data && gastos.data.length > 0 && (
+          {movimientos && movimientos.length > 0 && (
             <View style={styles.tarjeta}>
-              {gastos.data.map((gasto, i) => (
-                <View key={gasto.id}>
+              {movimientos.map((m, i) => (
+                <View key={`${m.tipo}-${m.id}`}>
                   {i > 0 && <View style={styles.separador} />}
-                  <FilaGasto
-                    gasto={gasto}
-                    miIntegranteId={yo?.id}
-                    hoy={hoy}
-                    onPress={() => router.push(`/grupo/${grupoId}/gasto/${gasto.id}` as Href)}
-                  />
+                  {m.tipo === 'gasto' ? (
+                    <FilaGasto
+                      gasto={m.gasto}
+                      miIntegranteId={yo?.id}
+                      hoy={hoy}
+                      onPress={() => router.push(`/grupo/${grupoId}/gasto/${m.id}` as Href)}
+                    />
+                  ) : (
+                    <FilaPago
+                      pago={m.pago}
+                      nombre={nombreRumi}
+                      hoy={hoy}
+                      onPress={() => router.push(`/grupo/${grupoId}/pago/${m.id}` as Href)}
+                    />
+                  )}
                 </View>
               ))}
             </View>
@@ -207,6 +258,8 @@ const styles = StyleSheet.create({
   accionPrincipal: { backgroundColor: PALETA.violeta, flexDirection: 'row', gap: 6 },
   accionIcono: { color: PALETA.blanco, fontSize: 18, fontWeight: '800' },
   accionPrincipalTexto: { color: PALETA.blanco, fontSize: 16, fontWeight: '700' },
+  accionSecundaria: { backgroundColor: PALETA.blanco, borderWidth: 1.5, borderColor: PALETA.violeta },
+  accionSecundariaTexto: { color: PALETA.morado, fontSize: 16, fontWeight: '700' },
   presionado: { opacity: 0.85 },
 
   seccion: { fontSize: 20, fontWeight: '800', color: PALETA.moradoOscuro, marginTop: 8 },

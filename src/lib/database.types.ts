@@ -41,25 +41,28 @@ export type Database = {
     Tables: {
       evidencias: {
         Row: {
-          gasto_id: string
+          gasto_id: string | null
           grupo_id: string
           id: string
+          liquidacion_id: string | null
           ruta: string
           subida_en: string
           subida_por: string
         }
         Insert: {
-          gasto_id: string
+          gasto_id?: string | null
           grupo_id: string
           id?: string
+          liquidacion_id?: string | null
           ruta: string
           subida_en?: string
           subida_por: string
         }
         Update: {
-          gasto_id?: string
+          gasto_id?: string | null
           grupo_id?: string
           id?: string
+          liquidacion_id?: string | null
           ruta?: string
           subida_en?: string
           subida_por?: string
@@ -310,6 +313,79 @@ export type Database = {
           },
         ]
       }
+      liquidaciones: {
+        Row: {
+          a: string
+          borrado_en: string | null
+          borrado_por: string | null
+          clave_idempotencia: string
+          creado_en: string
+          de: string
+          declarada_por: string
+          editado_en: string | null
+          editado_por: string | null
+          fecha: string
+          grupo_id: string
+          id: string
+          monto: number
+          version: number
+        }
+        Insert: {
+          a: string
+          borrado_en?: string | null
+          borrado_por?: string | null
+          clave_idempotencia: string
+          creado_en?: string
+          de: string
+          declarada_por: string
+          editado_en?: string | null
+          editado_por?: string | null
+          fecha?: string
+          grupo_id: string
+          id?: string
+          monto: number
+          version?: number
+        }
+        Update: {
+          a?: string
+          borrado_en?: string | null
+          borrado_por?: string | null
+          clave_idempotencia?: string
+          creado_en?: string
+          de?: string
+          declarada_por?: string
+          editado_en?: string | null
+          editado_por?: string | null
+          fecha?: string
+          grupo_id?: string
+          id?: string
+          monto?: number
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "liquidaciones_a_fkey"
+            columns: ["a"]
+            isOneToOne: false
+            referencedRelation: "integrantes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "liquidaciones_de_fkey"
+            columns: ["de"]
+            isOneToOne: false
+            referencedRelation: "integrantes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "liquidaciones_grupo_id_fkey"
+            columns: ["grupo_id"]
+            isOneToOne: false
+            referencedRelation: "grupos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       participaciones: {
         Row: {
           gasto_id: string
@@ -377,6 +453,10 @@ export type Database = {
         Args: { p_gasto_id: string; p_ruta: string }
         Returns: string
       }
+      registrar_evidencia_liquidacion: {
+        Args: { p_liquidacion_id: string; p_ruta: string }
+        Returns: string
+      }
       registrar_gasto: {
         Args: {
           p_categoria: string
@@ -388,6 +468,17 @@ export type Database = {
           p_pagado_por: string
           p_participantes: Json
           p_tipo_division: string
+        }
+        Returns: string
+      }
+      registrar_liquidacion: {
+        Args: {
+          p_a: string
+          p_clave_idempotencia: string
+          p_de: string
+          p_fecha: string
+          p_grupo_id: string
+          p_monto: number
         }
         Returns: string
       }

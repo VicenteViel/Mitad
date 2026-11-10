@@ -13,25 +13,26 @@ import {
 
 import { PALETA } from '@/theme/tema';
 
-import type { EvidenciaGasto } from '../api-detalle';
+import type { EvidenciaGasto, OrigenEvidencia } from '../api-detalle';
 import { esImagenPermitida, puedeBorrarEvidencia, TAMANO_MAXIMO_BYTES } from '../evidencia';
 import { textoFecha } from '../historial';
 import { useBorrarEvidencia, useEvidencias, useSubirEvidencia } from '../use-detalle-gasto';
 
 type Props = {
   grupoId: string;
-  gastoId: string;
+  origen: OrigenEvidencia;
   miIntegranteId: string | undefined;
   soyAdmin: boolean;
   hoy: string;
 };
 
-// "Evidencia": capturas de comprobantes del gasto. Cualquier rumi sube; borra
-// quien la subió o un admin. Tocar una imagen la abre en grande.
-export function SeccionEvidencia({ grupoId, gastoId, miIntegranteId, soyAdmin, hoy }: Props) {
-  const evidencias = useEvidencias(gastoId);
-  const subir = useSubirEvidencia(gastoId);
-  const borrar = useBorrarEvidencia(gastoId);
+// "Evidencia": capturas de comprobantes de un gasto (boletas) o de un pago
+// (transferencias). Cualquier rumi sube; borra quien la subió o un admin.
+// Tocar una imagen la abre en grande.
+export function SeccionEvidencia({ grupoId, origen, miIntegranteId, soyAdmin, hoy }: Props) {
+  const evidencias = useEvidencias(origen);
+  const subir = useSubirEvidencia(origen);
+  const borrar = useBorrarEvidencia(origen);
   const [abierta, setAbierta] = useState<EvidenciaGasto | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
 
@@ -52,7 +53,7 @@ export function SeccionEvidencia({ grupoId, gastoId, miIntegranteId, soyAdmin, h
       setAviso('La imagen pesa más de 5 MB. Prueba con otra captura.');
       return;
     }
-    subir.mutate({ grupoId, gastoId, uri: imagen.uri, mimeType: imagen.mimeType });
+    subir.mutate({ grupoId, origen, uri: imagen.uri, mimeType: imagen.mimeType });
   }
 
   function confirmarBorrado(evidencia: EvidenciaGasto) {
@@ -73,7 +74,9 @@ export function SeccionEvidencia({ grupoId, gastoId, miIntegranteId, soyAdmin, h
     <View style={styles.seccion}>
       <Text style={styles.titulo}>Evidencia</Text>
       <Text style={styles.ayuda}>
-        Sube capturas de la transferencia o la boleta para que todos las vean.
+        {origen.tipo === 'gasto'
+          ? 'Sube la boleta o una captura para que todos la vean.'
+          : 'Sube la captura de la transferencia para que todos la vean.'}
       </Text>
 
       {evidencias.isPending && <ActivityIndicator color={PALETA.morado} />}

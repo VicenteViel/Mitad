@@ -98,13 +98,16 @@ type FilaEvidencia = {
 const BUCKET = 'evidencias';
 const VIGENCIA_ENLACE_SEGUNDOS = 60 * 60;
 
-// Evidencias del gasto, las más nuevas primero, con enlaces temporales: el
-// bucket es privado y solo los rumis del grupo pueden generarlos.
-export async function obtenerEvidencias(gastoId: string): Promise<EvidenciaGasto[]> {
+// A qué pertenece una evidencia: un gasto (boleta) o un pago (transferencia).
+export type OrigenEvidencia = { tipo: 'gasto' | 'pago'; id: string };
+
+// Evidencias de un gasto o pago, las más nuevas primero, con enlaces
+// temporales: el bucket es privado y solo los rumis del grupo pueden generarlos.
+export async function obtenerEvidencias(origen: OrigenEvidencia): Promise<EvidenciaGasto[]> {
   const { data, error } = await supabase
     .from('evidencias')
     .select('id, ruta, subida_por, subida_en, autor:integrantes!evidencias_subida_por_fkey(nombre)')
-    .eq('gasto_id', gastoId)
+    .eq(origen.tipo === 'gasto' ? 'gasto_id' : 'liquidacion_id', origen.id)
     .order('subida_en', { ascending: false });
 
   if (error) {
@@ -134,7 +137,7 @@ export async function obtenerEvidencias(gastoId: string): Promise<EvidenciaGasto
 
 export type NuevaEvidencia = {
   grupoId: string;
-  gastoId: string;
+  origen: OrigenEvidencia;
   uri: string;
   mimeType: string | null | undefined;
 };
@@ -144,7 +147,7 @@ export type NuevaEvidencia = {
 export async function subirEvidencia(evidencia: NuevaEvidencia): Promise<void> {
   const ruta = rutaEvidencia(
     evidencia.grupoId,
-    evidencia.gastoId,
+    evidencia.origen.id,
     nuevaClaveIdempotencia(),
     evidencia.mimeType,
   );
@@ -158,10 +161,13 @@ export async function subirEvidencia(evidencia: NuevaEvidencia): Promise<void> {
     throw new Error(`No pudimos subir la imagen: ${errorSubida.message}`);
   }
 
-  const { error } = await supabase.rpc('registrar_evidencia', {
-    p_gasto_id: evidencia.gastoId,
-    p_ruta: ruta,
-  });
+  const { error } =
+    evidencia.origen.tipo === 'gasto'
+      ? await supabase.rpc('registrar_evidencia', { p_gasto_id: evidencia.origen.id, p_ruta: ruta })
+      : await supabase.rpc('registrar_evidencia_liquidacion', {
+          p_liquidacion_id: evidencia.origen.id,
+          p_ruta: ruta,
+        });
   if (error) {
     await supabase.storage.from(BUCKET).remove([ruta]);
     throw new Error(`No pudimos guardar la evidencia: ${error.message}`);
