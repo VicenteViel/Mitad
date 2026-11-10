@@ -21,6 +21,11 @@ describe('dividirEquitativo', () => {
     expect(r.map((p) => p.monto)).toEqual([3334, 3334, 3333]);
   });
 
+  it('si quien pagó no participa, nadie absorbe todo el resto', () => {
+    const r = dividirEquitativo(10000, ['ana', 'diego', 'camila'], 'pedro');
+    expect(r.map((p) => p.monto)).toEqual([3334, 3333, 3333]);
+  });
+
   it('la suma siempre es igual al monto', () => {
     for (const monto of [1, 7, 100, 9999, 48000, 1234567]) {
       for (const n of [1, 2, 3, 4, 7]) {

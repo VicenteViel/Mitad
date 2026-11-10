@@ -2,7 +2,8 @@ export type Participacion = { integranteId: string; monto: number };
 
 /**
  * Divide un monto en partes iguales, en pesos enteros.
- * `participantes` debe venir ordenado por orden de llegada al grupo.
+ * `participantes` debe venir ordenado por orden de llegada al grupo (`unido_en`
+ * y luego `id`), el mismo orden que usa `registrar_gasto` en el servidor.
  */
 export function dividirEquitativo(
   monto: number,
