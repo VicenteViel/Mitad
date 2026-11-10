@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { PALETA } from '@/theme/tema';
 
@@ -15,11 +15,13 @@ type Props = {
   gasto: GastoHistorial;
   miIntegranteId: string | undefined;
   hoy: string;
+  onPress: () => void;
 };
 
 // Un gasto en el historial: categoría, descripción, quién pagó, cuándo, el
 // total y cuánto me toca. Los borrados se muestran tachados (regla 33).
-export function FilaGasto({ gasto, miIntegranteId, hoy }: Props) {
+// Al tocarlo se abre su detalle.
+export function FilaGasto({ gasto, miIntegranteId, hoy, onPress }: Props) {
   const parte = miParte(gasto, miIntegranteId);
   const paguéYo = gasto.pagadoPorId === miIntegranteId;
   const quienPago = paguéYo ? 'Pagaste tú' : `Pagó ${gasto.pagadoPorNombre}`;
@@ -38,10 +40,16 @@ export function FilaGasto({ gasto, miIntegranteId, hoy }: Props) {
     .join(', ');
 
   return (
-    <View
-      style={[styles.fila, gasto.eliminado && styles.eliminado]}
-      accessible
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.fila,
+        gasto.eliminado && styles.eliminado,
+        pressed && styles.presionada,
+      ]}
+      accessibilityRole="button"
       accessibilityLabel={descripcionAccesible}
+      accessibilityHint="Abre el detalle del gasto"
     >
       <View style={styles.icono}>
         <Text style={styles.iconoTexto}>{iconoCategoria(gasto.categoria)}</Text>
@@ -68,13 +76,14 @@ export function FilaGasto({ gasto, miIntegranteId, hoy }: Props) {
         )}
         {!gasto.eliminado && parte === null && <Text style={styles.noParticipas}>No participas</Text>}
       </View>
-    </View>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   fila: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
   eliminado: { opacity: 0.5 },
+  presionada: { backgroundColor: PALETA.lilaClaro, borderRadius: 12 },
   icono: {
     width: 44,
     height: 44,

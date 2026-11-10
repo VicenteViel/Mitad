@@ -39,6 +39,55 @@ export type Database = {
   }
   public: {
     Tables: {
+      evidencias: {
+        Row: {
+          gasto_id: string
+          grupo_id: string
+          id: string
+          ruta: string
+          subida_en: string
+          subida_por: string
+        }
+        Insert: {
+          gasto_id: string
+          grupo_id: string
+          id?: string
+          ruta: string
+          subida_en?: string
+          subida_por: string
+        }
+        Update: {
+          gasto_id?: string
+          grupo_id?: string
+          id?: string
+          ruta?: string
+          subida_en?: string
+          subida_por?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evidencias_gasto_id_fkey"
+            columns: ["gasto_id"]
+            isOneToOne: false
+            referencedRelation: "gastos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evidencias_grupo_id_fkey"
+            columns: ["grupo_id"]
+            isOneToOne: false
+            referencedRelation: "grupos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evidencias_subida_por_fkey"
+            columns: ["subida_por"]
+            isOneToOne: false
+            referencedRelation: "integrantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gastos: {
         Row: {
           borrado_en: string | null
@@ -308,6 +357,7 @@ export type Database = {
         Args: { p_grupo_id: string; p_integrantes: Json }
         Returns: number
       }
+      borrar_evidencia: { Args: { p_evidencia_id: string }; Returns: string }
       crear_invitacion: { Args: { p_integrante_id: string }; Returns: string }
       es_admin: { Args: { p_grupo_id: string }; Returns: boolean }
       es_integrante: { Args: { p_grupo_id: string }; Returns: boolean }
@@ -321,6 +371,10 @@ export type Database = {
           p_nombre: string
           p_nombre_integrante: string
         }
+        Returns: string
+      }
+      registrar_evidencia: {
+        Args: { p_gasto_id: string; p_ruta: string }
         Returns: string
       }
       registrar_gasto: {

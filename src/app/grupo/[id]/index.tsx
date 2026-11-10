@@ -123,7 +123,12 @@ export default function GrupoScreen() {
               {gastos.data.map((gasto, i) => (
                 <View key={gasto.id}>
                   {i > 0 && <View style={styles.separador} />}
-                  <FilaGasto gasto={gasto} miIntegranteId={yo?.id} hoy={hoy} />
+                  <FilaGasto
+                    gasto={gasto}
+                    miIntegranteId={yo?.id}
+                    hoy={hoy}
+                    onPress={() => router.push(`/grupo/${grupoId}/gasto/${gasto.id}` as Href)}
+                  />
                 </View>
               ))}
             </View>
