@@ -22,14 +22,12 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider value={temaRumi}>
         <Stack screenOptions={{ headerShown: false }}>
-          {/* Con sesión, las pantallas de acceso llevan a Inicio. */}
+          {/* Con sesión, Ingresar lleva a Inicio. */}
           <Stack.Protected guard={!sesion} redirectTo="/">
-            <Stack.Screen name="bienvenida" />
-            <Stack.Screen name="recuperar" />
             <Stack.Screen name="ingresar" />
           </Stack.Protected>
-          {/* Sin sesión, todo lo demás lleva a la bienvenida (no a Ingresar). */}
-          <Stack.Protected guard={!!sesion} redirectTo="/bienvenida">
+          {/* Sin sesión, todo lo demás lleva a Ingresar. */}
+          <Stack.Protected guard={!!sesion} redirectTo="/ingresar">
             <Stack.Screen name="index" />
             <Stack.Screen name="(nuevo-grupo)" />
             <Stack.Screen name="(unirse)" options={{ gestureEnabled: false }} />

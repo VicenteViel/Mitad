@@ -1,5 +1,5 @@
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { consumirIntencion } from '@/features/auth/intencion';
+import { BotonOpcion } from '@/components/boton-opcion';
 import { useSesion } from '@/features/auth/use-sesion';
 import { TarjetaGrupo } from '@/features/grupos/components/tarjeta-grupo';
 import { useMisGrupos } from '@/features/grupos/use-mis-grupos';
@@ -24,13 +24,12 @@ export default function InicioScreen() {
   const { sesion } = useSesion();
   const insets = useSafeAreaInsets();
   const { data: grupos, isPending, isError, refetch, isRefetching } = useMisGrupos();
+  const [ayudaInvitacion, setAyudaInvitacion] = useState(false);
 
-  // Quien eligió "Soy nuevo" en la bienvenida va directo a crear su grupo.
-  useEffect(() => {
-    if (consumirIntencion() === 'crear-grupo') {
-      router.push('/crear-grupo');
-    }
-  }, []);
+  // El camino lo decide la cuenta, no lo que la persona eligió al entrar:
+  // con grupos ve sus grupos; sin grupos ve "¿Qué quieres hacer?".
+  const sinGrupos = grupos?.length === 0;
+  const conGrupos = grupos !== undefined && grupos.length > 0;
 
   // Recordatorio de correo pendiente; se relee cada vez que se vuelve a Inicio.
   const [avisoCorreo, setAvisoCorreo] = useState<AvisoCorreo>(null);
@@ -90,29 +89,6 @@ export default function InicioScreen() {
         </View>
       )}
 
-      {/* Tarjeta principal */}
-      <View style={styles.hero}>
-        <View style={[styles.burbuja, styles.burbujaGrande]} />
-        <View style={[styles.burbuja, styles.burbujaChica]} />
-        <Text style={styles.heroMarca}>Rumi</Text>
-        <Text style={styles.heroTitulo}>Comparte gastos.{'\n'}Comparte responsabilidades.</Text>
-        <Pressable
-          onPress={() => router.push('/crear-grupo')}
-          accessibilityRole="button"
-          style={({ pressed }) => [styles.heroBoton, pressed && styles.presionado]}
-        >
-          <Text style={styles.heroBotonTexto}>+ Crear grupo</Text>
-        </Pressable>
-      </View>
-
-      {/* Mis grupos */}
-      <View style={styles.seccionEncabezado}>
-        <Text style={styles.seccionTitulo}>Tus grupos</Text>
-        {grupos && grupos.length > 0 && (
-          <Text style={styles.seccionContador}>{grupos.length}</Text>
-        )}
-      </View>
-
       {isPending && <ActivityIndicator color={PALETA.morado} style={styles.cargando} />}
 
       {isError && (
@@ -122,25 +98,76 @@ export default function InicioScreen() {
         </Pressable>
       )}
 
-      {grupos?.length === 0 && (
-        <View style={styles.vacio}>
-          <Text style={styles.vacioIcono}>🏠</Text>
-          <Text style={styles.vacioTitulo}>Todavía no tienes grupos</Text>
-          <Text style={styles.vacioTexto}>
-            Crea uno para tu casa o abre el link de invitación que te enviaron.
-          </Text>
-        </View>
+      {/* Sin grupos: la cuenta es nueva (o entró con otro correo). */}
+      {sinGrupos && (
+        <>
+          <Text style={styles.comenzarTitulo}>¿Qué quieres hacer?</Text>
+          <BotonOpcion
+            principal
+            titulo="Crear un grupo"
+            detalle="Para tu casa, tu pareja o tus amigos."
+            onPress={() => router.push('/crear-grupo')}
+          />
+          <BotonOpcion
+            titulo="Me invitaron"
+            detalle="Tengo un link de invitación del administrador."
+            onPress={() => (SIMULAR_GUARDADO ? router.push('/unido') : setAyudaInvitacion(true))}
+          />
+          {ayudaInvitacion && (
+            <Text style={styles.ayudaInvitacion}>
+              Busca el mensaje con el link (por ejemplo, en WhatsApp) y ábrelo desde este teléfono.
+              La app te llevará directo a tu grupo.
+            </Text>
+          )}
+
+          <View style={styles.otroCorreo}>
+            <Text style={styles.otroCorreoTitulo}>¿Esperabas ver tus grupos?</Text>
+            <Text style={styles.otroCorreoTexto}>
+              Entraste con {correo}. Si antes usabas otro correo, entra con ese.
+            </Text>
+            <Pressable onPress={() => supabase.auth.signOut()} accessibilityRole="button">
+              <Text style={styles.otroCorreoBoton}>Cambiar de correo</Text>
+            </Pressable>
+          </View>
+        </>
       )}
 
-      {grupos?.map((grupo) => <TarjetaGrupo key={grupo.id} grupo={grupo} />)}
+      {/* Con grupos: tarjeta principal y la lista. */}
+      {conGrupos && (
+        <>
+          <View style={styles.hero}>
+            <View style={[styles.burbuja, styles.burbujaGrande]} />
+            <View style={[styles.burbuja, styles.burbujaChica]} />
+            <Text style={styles.heroMarca}>Rumi</Text>
+            <Text style={styles.heroTitulo}>
+              Comparte gastos.{'\n'}Comparte responsabilidades.
+            </Text>
+            <Pressable
+              onPress={() => router.push('/crear-grupo')}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.heroBoton, pressed && styles.presionado]}
+            >
+              <Text style={styles.heroBotonTexto}>+ Crear grupo</Text>
+            </Pressable>
+          </View>
 
-      {/* Invitación */}
-      <View style={styles.invitacion}>
-        <Text style={styles.invitacionTitulo}>¿Te invitaron a un grupo?</Text>
-        <Text style={styles.invitacionTexto}>
-          Abre en este teléfono el link que te envió el administrador.
-        </Text>
-      </View>
+          <View style={styles.seccionEncabezado}>
+            <Text style={styles.seccionTitulo}>Tus grupos</Text>
+            <Text style={styles.seccionContador}>{grupos.length}</Text>
+          </View>
+
+          {grupos.map((grupo) => (
+            <TarjetaGrupo key={grupo.id} grupo={grupo} />
+          ))}
+
+          <View style={styles.invitacion}>
+            <Text style={styles.invitacionTitulo}>¿Te invitaron a otro grupo?</Text>
+            <Text style={styles.invitacionTexto}>
+              Abre en este teléfono el link que te envió el administrador.
+            </Text>
+          </View>
+        </>
+      )}
 
       <Pressable
         onPress={() => supabase.auth.signOut()}
@@ -237,18 +264,20 @@ const styles = StyleSheet.create({
   avisoTitulo: { fontSize: 16, fontWeight: '700', color: PALETA.error },
   avisoTexto: { fontSize: 14, color: PALETA.textoSuave },
 
-  vacio: {
-    alignItems: 'center',
-    gap: 6,
-    padding: 24,
-    borderRadius: 20,
+  comenzarTitulo: { fontSize: 22, fontWeight: '800', color: PALETA.moradoOscuro, marginTop: 8 },
+  ayudaInvitacion: { fontSize: 14, color: PALETA.textoSuave, lineHeight: 20, paddingHorizontal: 4 },
+  otroCorreo: {
+    gap: 4,
+    padding: 16,
+    borderRadius: 18,
     borderWidth: 2,
     borderStyle: 'dashed',
     borderColor: PALETA.borde,
+    marginTop: 8,
   },
-  vacioIcono: { fontSize: 36 },
-  vacioTitulo: { fontSize: 17, fontWeight: '700', color: PALETA.moradoOscuro },
-  vacioTexto: { fontSize: 14, color: PALETA.textoSuave, textAlign: 'center' },
+  otroCorreoTitulo: { fontSize: 15, fontWeight: '700', color: PALETA.moradoOscuro },
+  otroCorreoTexto: { fontSize: 14, color: PALETA.textoSuave, lineHeight: 20 },
+  otroCorreoBoton: { color: PALETA.morado, fontSize: 15, fontWeight: '700', marginTop: 4 },
 
   invitacion: {
     backgroundColor: PALETA.lilaClaro,
