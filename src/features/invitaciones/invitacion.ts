@@ -1,4 +1,4 @@
-import type { Avatar, Color } from '@/features/grupos/apariencia';
+import { leerColor, type Avatar, type Color } from '@/features/grupos/apariencia';
 
 // Lo que recibe un integrante al aceptar su link: el grupo al que entra y el
 // lugar que el admin le preparó (nombre, ícono y color).
@@ -40,7 +40,7 @@ export function parsearInvitacionAceptada(datos: unknown): InvitacionAceptada {
     integrante: {
       nombre: integrante.nombre,
       avatar: integrante.avatar === 'mujer' ? 'mujer' : 'hombre',
-      color: integrante.color === 'rosado' ? 'rosado' : 'azul',
+      color: leerColor(integrante.color, integrante.avatar === 'mujer' ? 'mujer' : 'hombre'),
     },
   };
 }

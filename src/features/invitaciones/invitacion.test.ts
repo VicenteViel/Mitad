@@ -15,7 +15,7 @@ describe('parsearInvitacionAceptada', () => {
   it('usa valores seguros si el ícono o el color no son conocidos', () => {
     const resultado = parsearInvitacionAceptada({
       grupo: { id: 'g1', nombre: 'Casa' },
-      integrante: { nombre: 'Diego', avatar: 'otro', color: 'verde' },
+      integrante: { nombre: 'Diego', avatar: 'otro', color: 'fucsia' },
     });
     expect(resultado.integrante).toEqual({ nombre: 'Diego', avatar: 'hombre', color: 'azul' });
     expect(resultado.grupo.descripcion).toBeNull();

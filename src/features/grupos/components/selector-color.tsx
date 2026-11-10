@@ -1,17 +1,19 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { COLORES, type Color } from '../apariencia';
+import { COLORES, NOMBRES_COLOR, type Color } from '../apariencia';
 
 type Props = {
   value: Color;
   onChange: (color: Color) => void;
+  // Colores a mostrar; por defecto, todos.
+  colores?: Color[];
 };
 
-const NOMBRES: Record<Color, string> = { azul: 'Azul', rosado: 'Rosado' };
+
+const TODOS = Object.keys(COLORES) as Color[];
 
 // Círculos de color; el elegido lleva un anillo alrededor.
-export function SelectorColor({ value, onChange }: Props) {
-  const colores = Object.keys(COLORES) as Color[];
+export function SelectorColor({ value, onChange, colores = TODOS }: Props) {
 
   return (
     <View style={styles.contenedor} accessibilityRole="radiogroup">
@@ -24,7 +26,7 @@ export function SelectorColor({ value, onChange }: Props) {
             hitSlop={6}
             accessibilityRole="radio"
             accessibilityState={{ checked: seleccionado }}
-            accessibilityLabel={NOMBRES[color]}
+            accessibilityLabel={NOMBRES_COLOR[color]}
             style={[styles.anillo, seleccionado && { borderColor: COLORES[color] }]}
           >
             <View style={[styles.circulo, { backgroundColor: COLORES[color] }]} />
@@ -36,7 +38,7 @@ export function SelectorColor({ value, onChange }: Props) {
 }
 
 const styles = StyleSheet.create({
-  contenedor: { flexDirection: 'row', gap: 6 },
+  contenedor: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   anillo: {
     width: 32,
     height: 32,

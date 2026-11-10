@@ -78,15 +78,28 @@ export default function GrupoScreen() {
       }
     >
       <StatusBar style="dark" />
-      <Pressable
-        onPress={() => router.back()}
-        accessibilityRole="button"
-        accessibilityLabel="Volver a Inicio"
-        hitSlop={10}
-        style={styles.volver}
-      >
-        <Text style={styles.volverTexto}>‹ Inicio</Text>
-      </Pressable>
+      <View style={styles.barra}>
+        <Pressable
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel="Volver a Inicio"
+          hitSlop={10}
+          style={styles.volver}
+        >
+          <Text style={styles.volverTexto}>‹ Inicio</Text>
+        </Pressable>
+        {grupo && (
+          <Pressable
+            onPress={() => router.push({ pathname: '/grupo/[id]/ajustes', params: { id: grupoId } })}
+            accessibilityRole="button"
+            accessibilityLabel="Ajustes del grupo"
+            hitSlop={10}
+            style={styles.volver}
+          >
+            <Text style={styles.volverTexto}>Ajustes ⚙︎</Text>
+          </Pressable>
+        )}
+      </View>
 
       {isPending && <ActivityIndicator color={PALETA.morado} style={styles.cargando} />}
 
@@ -215,7 +228,8 @@ export default function GrupoScreen() {
 const styles = StyleSheet.create({
   fondo: { flex: 1, backgroundColor: PALETA.crema },
   contenido: { paddingHorizontal: 20, paddingBottom: 48, gap: 14 },
-  volver: { alignSelf: 'flex-start', paddingVertical: 6 },
+  barra: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  volver: { paddingVertical: 6 },
   volverTexto: { color: PALETA.morado, fontSize: 17, fontWeight: '600' },
   cargando: { marginVertical: 40 },
 

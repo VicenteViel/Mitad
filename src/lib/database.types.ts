@@ -434,6 +434,14 @@ export type Database = {
         Returns: number
       }
       borrar_evidencia: { Args: { p_evidencia_id: string }; Returns: string }
+      cambiar_apariencia: {
+        Args: { p_avatar: string; p_color: string; p_integrante_id: string }
+        Returns: undefined
+      }
+      cambiar_rol: {
+        Args: { p_integrante_id: string; p_rol: string }
+        Returns: undefined
+      }
       crear_invitacion: { Args: { p_integrante_id: string }; Returns: string }
       editar_gasto: {
         Args: {
@@ -447,6 +455,10 @@ export type Database = {
           p_version: number
         }
         Returns: number
+      }
+      editar_grupo: {
+        Args: { p_descripcion: string; p_grupo_id: string; p_nombre: string }
+        Returns: undefined
       }
       editar_liquidacion: {
         Args: {
@@ -476,6 +488,10 @@ export type Database = {
           p_nombre_integrante: string
         }
         Returns: string
+      }
+      quitar_integrante: {
+        Args: { p_integrante_id: string }
+        Returns: undefined
       }
       registrar_evidencia: {
         Args: { p_gasto_id: string; p_ruta: string }
@@ -510,6 +526,8 @@ export type Database = {
         }
         Returns: string
       }
+      salir_del_grupo: { Args: { p_grupo_id: string }; Returns: undefined }
+      tomar_admin: { Args: { p_grupo_id: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
