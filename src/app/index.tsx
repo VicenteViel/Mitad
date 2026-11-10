@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import { useEffect } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -15,6 +15,7 @@ import { consumirIntencion } from '@/features/auth/intencion';
 import { useSesion } from '@/features/auth/use-sesion';
 import { TarjetaGrupo } from '@/features/grupos/components/tarjeta-grupo';
 import { useMisGrupos } from '@/features/grupos/use-mis-grupos';
+import { leerAvisoCorreo, type AvisoCorreo } from '@/features/invitaciones/aviso-correo';
 import { SIMULAR_GUARDADO } from '@/lib/desarrollo';
 import { supabase } from '@/lib/supabase';
 import { PALETA } from '@/theme/tema';
@@ -30,6 +31,14 @@ export default function InicioScreen() {
       router.push('/crear-grupo');
     }
   }, []);
+
+  // Recordatorio de correo pendiente; se relee cada vez que se vuelve a Inicio.
+  const [avisoCorreo, setAvisoCorreo] = useState<AvisoCorreo>(null);
+  useFocusEffect(
+    useCallback(() => {
+      setAvisoCorreo(leerAvisoCorreo());
+    }, []),
+  );
 
   const correo = sesion?.user.email ?? '';
   const inicial = correo.charAt(0).toUpperCase() || 'R';
@@ -59,7 +68,27 @@ export default function InicioScreen() {
         </View>
       </View>
 
-      {SIMULAR_GUARDADO && <Text style={styles.modoPrueba}>Modo prueba activo</Text>}
+      {SIMULAR_GUARDADO && (
+        <View style={styles.filaPrueba}>
+          <Text style={styles.modoPrueba}>Modo prueba activo</Text>
+          <Pressable onPress={() => router.push('/unido')} accessibilityRole="button">
+            <Text style={styles.enlacePrueba}>Probar: aceptar una invitación</Text>
+          </Pressable>
+        </View>
+      )}
+
+      {avisoCorreo && (
+        <View style={styles.avisoCorreo}>
+          <Text style={styles.avisoCorreoTitulo}>
+            {avisoCorreo.tipo === 'verificar' ? 'Verifica tu correo' : 'Agrega tu correo'}
+          </Text>
+          <Text style={styles.avisoCorreoTexto}>
+            {avisoCorreo.tipo === 'verificar'
+              ? `Te enviamos un enlace a ${avisoCorreo.correo}. Confírmalo para poder recuperar tu lugar si pierdes el teléfono.`
+              : 'Sin correo no podrás recuperar tu lugar en el grupo si pierdes el teléfono.'}
+          </Text>
+        </View>
+      )}
 
       {/* Tarjeta principal */}
       <View style={styles.hero}>
@@ -142,6 +171,18 @@ const styles = StyleSheet.create({
   },
   avatarTexto: { color: PALETA.blanco, fontSize: 20, fontWeight: '800' },
 
+  filaPrueba: { flexDirection: 'row', alignItems: 'center', gap: 12, flexWrap: 'wrap' },
+  enlacePrueba: { color: PALETA.morado, fontSize: 13, fontWeight: '700' },
+  avisoCorreo: {
+    backgroundColor: PALETA.blanco,
+    borderLeftWidth: 4,
+    borderLeftColor: PALETA.violeta,
+    borderRadius: 14,
+    padding: 14,
+    gap: 4,
+  },
+  avisoCorreoTitulo: { fontSize: 16, fontWeight: '700', color: PALETA.moradoOscuro },
+  avisoCorreoTexto: { fontSize: 14, color: PALETA.textoSuave, lineHeight: 20 },
   modoPrueba: {
     alignSelf: 'flex-start',
     backgroundColor: PALETA.lilaClaro,
