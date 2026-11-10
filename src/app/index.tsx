@@ -157,7 +157,11 @@ export default function InicioScreen() {
           </View>
 
           {grupos.map((grupo) => (
-            <TarjetaGrupo key={grupo.id} grupo={grupo} />
+            <TarjetaGrupo
+              key={grupo.id}
+              grupo={grupo}
+              onPress={() => router.push({ pathname: '/grupo/[id]', params: { id: grupo.id } })}
+            />
           ))}
 
           <View style={styles.invitacion}>

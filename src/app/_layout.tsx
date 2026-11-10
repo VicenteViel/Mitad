@@ -31,6 +31,8 @@ export default function RootLayout() {
             <Stack.Screen name="index" />
             <Stack.Screen name="(nuevo-grupo)" />
             <Stack.Screen name="(unirse)" options={{ gestureEnabled: false }} />
+            {/* Detalle del grupo y lo que cuelga de él (por ejemplo, nuevo gasto). */}
+            <Stack.Screen name="grupo/[id]" />
           </Stack.Protected>
         </Stack>
       </ThemeProvider>
