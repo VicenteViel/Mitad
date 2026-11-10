@@ -5,10 +5,11 @@ import {
   obtenerDetalleGasto,
   obtenerEvidencias,
   subirEvidencia,
+  type OrigenEvidencia,
 } from './api-detalle';
 
-export function claveEvidencias(gastoId: string) {
-  return ['evidencias', gastoId] as const;
+export function claveEvidencias(origen: OrigenEvidencia) {
+  return ['evidencias', origen.tipo, origen.id] as const;
 }
 
 export function useDetalleGasto(gastoId: string) {
@@ -19,28 +20,28 @@ export function useDetalleGasto(gastoId: string) {
   });
 }
 
-export function useEvidencias(gastoId: string) {
+export function useEvidencias(origen: OrigenEvidencia) {
   return useQuery({
-    queryKey: claveEvidencias(gastoId),
-    queryFn: () => obtenerEvidencias(gastoId),
-    enabled: gastoId.length > 0,
+    queryKey: claveEvidencias(origen),
+    queryFn: () => obtenerEvidencias(origen),
+    enabled: origen.id.length > 0,
   });
 }
 
-export function useSubirEvidencia(gastoId: string) {
+export function useSubirEvidencia(origen: OrigenEvidencia) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: subirEvidencia,
     retry: false,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: claveEvidencias(gastoId) }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: claveEvidencias(origen) }),
   });
 }
 
-export function useBorrarEvidencia(gastoId: string) {
+export function useBorrarEvidencia(origen: OrigenEvidencia) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: borrarEvidencia,
     retry: false,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: claveEvidencias(gastoId) }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: claveEvidencias(origen) }),
   });
 }

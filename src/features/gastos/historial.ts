@@ -7,6 +7,7 @@ export type GastoHistorial = {
   monto: number;
   categoria: Categoria;
   fecha: string; // YYYY-MM-DD
+  creadoEn: string;
   eliminado: boolean;
   pagadoPorId: string;
   pagadoPorNombre: string;

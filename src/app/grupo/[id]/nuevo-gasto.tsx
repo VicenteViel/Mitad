@@ -2,6 +2,7 @@ import { router, useLocalSearchParams, useTheme } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { Chip } from '@/components/chip';
 import { PantallaFormulario } from '@/components/pantalla-formulario';
 import { hoyLocal, nuevaClaveIdempotencia } from '@/features/gastos/api';
 import { dividirEquitativo, type Participacion } from '@/features/gastos/division';
@@ -252,31 +253,6 @@ export default function NuevoGastoScreen() {
   );
 }
 
-type ChipProps = {
-  texto: string;
-  activo: boolean;
-  onPress: () => void;
-  deshabilitado?: boolean;
-};
-
-function Chip({ texto, activo, onPress, deshabilitado = false }: ChipProps) {
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={deshabilitado}
-      accessibilityRole="radio"
-      accessibilityState={{ selected: activo, disabled: deshabilitado }}
-      style={[
-        styles.chip,
-        activo && styles.chipActivo,
-        deshabilitado && styles.chipDeshabilitado,
-      ]}
-    >
-      <Text style={[styles.chipTexto, activo && styles.chipTextoActivo]}>{texto}</Text>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
   modoPrueba: {
     backgroundColor: PALETA.lilaClaro,
@@ -294,17 +270,6 @@ const styles = StyleSheet.create({
   error: { color: PALETA.error, fontSize: 14 },
   nota: { color: PALETA.textoSuave, fontSize: 13 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: {
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: PALETA.borde,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-  },
-  chipActivo: { backgroundColor: PALETA.morado, borderColor: PALETA.morado },
-  chipDeshabilitado: { opacity: 0.4 },
-  chipTexto: { fontSize: 15, color: PALETA.moradoOscuro },
-  chipTextoActivo: { color: PALETA.blanco, fontWeight: '600' },
   fila: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 48 },
   filaNombre: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
   casilla: {

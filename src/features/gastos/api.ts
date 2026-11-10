@@ -99,7 +99,7 @@ export async function obtenerGastos(grupoId: string): Promise<GastoHistorial[]> 
   const { data, error } = await supabase
     .from('gastos')
     .select(
-      'id, descripcion, monto, categoria, fecha, borrado_en, pagado_por, ' +
+      'id, descripcion, monto, categoria, fecha, creado_en, borrado_en, pagado_por, ' +
         'pagador:integrantes!gastos_pagado_por_fkey(nombre), ' +
         'participaciones(integrante_id, monto)',
     )
@@ -117,6 +117,7 @@ export async function obtenerGastos(grupoId: string): Promise<GastoHistorial[]> 
     monto: g.monto,
     categoria: esCategoria(g.categoria) ? g.categoria : 'otros',
     fecha: g.fecha,
+    creadoEn: g.creado_en,
     eliminado: g.borrado_en !== null,
     pagadoPorId: g.pagado_por,
     pagadoPorNombre: g.pagador?.nombre ?? 'Alguien',
@@ -135,6 +136,7 @@ type FilaGasto = {
   monto: number;
   categoria: string;
   fecha: string;
+  creado_en: string;
   borrado_en: string | null;
   pagado_por: string;
   pagador: { nombre: string } | null;

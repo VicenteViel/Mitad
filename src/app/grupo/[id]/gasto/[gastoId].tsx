@@ -28,7 +28,7 @@ export default function DetalleGastoScreen() {
   const { sesion } = useSesion();
   const { data: grupo } = useGrupo(id ?? '');
   const { data: gasto, isPending, isError, refetch, isRefetching } = useDetalleGasto(gastoId ?? '');
-  const evidencias = useEvidencias(gastoId ?? '');
+  const evidencias = useEvidencias({ tipo: 'gasto', id: gastoId ?? '' });
 
   const yo = grupo?.integrantes.find((i) => i.usuarioId === sesion?.user.id);
   const hoy = hoyLocal();
@@ -119,7 +119,7 @@ export default function DetalleGastoScreen() {
           {/* Evidencia */}
           <SeccionEvidencia
             grupoId={gasto.grupoId}
-            gastoId={gasto.id}
+            origen={{ tipo: 'gasto', id: gasto.id }}
             miIntegranteId={yo?.id}
             soyAdmin={yo?.rol === 'admin'}
             hoy={hoy}

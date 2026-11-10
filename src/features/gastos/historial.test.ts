@@ -6,6 +6,7 @@ const gasto: GastoHistorial = {
   monto: 10000,
   categoria: 'alimentacion',
   fecha: '2026-11-10',
+  creadoEn: '2026-11-10T12:00:00Z',
   eliminado: false,
   pagadoPorId: 'diego',
   pagadoPorNombre: 'Diego',
