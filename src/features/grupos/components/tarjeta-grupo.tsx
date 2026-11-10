@@ -9,7 +9,7 @@ import type { GrupoResumen } from '../api';
 export function TarjetaGrupo({ grupo, onPress }: { grupo: GrupoResumen; onPress: () => void }) {
   const inicial = grupo.nombre.trim().charAt(0).toUpperCase() || '?';
   const integrantes =
-    grupo.cantidadIntegrantes === 1 ? '1 integrante' : `${grupo.cantidadIntegrantes} integrantes`;
+    grupo.cantidadIntegrantes === 1 ? '1 rumi' : `${grupo.cantidadIntegrantes} rumis`;
 
   return (
     <Pressable

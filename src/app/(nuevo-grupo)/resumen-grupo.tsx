@@ -86,7 +86,7 @@ export default function ResumenGrupoScreen() {
       />
       {erroresGrupo.descripcion && <Text style={styles.error}>{erroresGrupo.descripcion}</Text>}
 
-      <Text style={[styles.seccion, { color: colors.text }]}>Integrantes ({total})</Text>
+      <Text style={[styles.seccion, { color: colors.text }]}>Rumis ({total})</Text>
       <FilaIntegrante
         integrante={borrador.yo}
         etiqueta="Tú · admin"
@@ -106,7 +106,7 @@ export default function ResumenGrupoScreen() {
 
       {borrador.integrantes.length < MAX_INTEGRANTES_POR_VEZ && (
         <Pressable onPress={agregarIntegrante} accessibilityRole="button" style={styles.agregar}>
-          <Text style={[styles.link, { color: colors.primary }]}>+ Agregar integrante</Text>
+          <Text style={[styles.link, { color: colors.primary }]}>+ Agregar rumi</Text>
         </Pressable>
       )}
 

@@ -29,7 +29,7 @@ export function FilaIntegrante({ integrante, etiqueta, error, onChange, onQuitar
             onPress={onQuitar}
             hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel={`Quitar a ${integrante.nombre || 'este integrante'}`}
+            accessibilityLabel={`Quitar a ${integrante.nombre || 'este rumi'}`}
           >
             <Text style={styles.quitar}>Quitar</Text>
           </Pressable>

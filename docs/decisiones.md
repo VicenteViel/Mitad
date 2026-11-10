@@ -60,6 +60,7 @@ Registro de las decisiones de producto y arquitectura. Si una decisión cambia, 
 23. **Se empieza con Expo Go.** Se pasa a development build al probar los links de invitación y antes de la beta (y más adelante para notificaciones y pagos).
 24. **Sin Zustand** hasta que haga falta: TanStack Query + estado local.
 25. **SMTP propio** para los correos OTP. El SMTP por defecto de Supabase es solo para desarrollo.
+25b. **En la app, los integrantes se llaman "rumis".** Viene de *roomie* (compañero de casa), escrito R-U-M-I. Los usuarios siempre ven "rumi" / "rumis" ("4 rumis", "+ Agregar rumi", "Rumi 1, Rumi 2…"), nunca "integrante". En el código, la base de datos y la documentación técnica se sigue usando "integrante".
 
 ### Entorno e infraestructura
 
