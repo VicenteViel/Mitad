@@ -30,6 +30,13 @@ export function formatearPesos(monto: number): string {
   return '$' + String(monto).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
+// Pone los puntos de miles mientras se escribe: "10000" → "10.000". Descarta
+// lo que no sea dígito y limita a 9 cifras (cabe en un integer de Postgres).
+export function formatearEntradaMonto(texto: string): string {
+  const digitos = texto.replace(/\D/g, '').replace(/^0+/, '').slice(0, 9);
+  return digitos ? formatearPesos(Number(digitos)).slice(1) : '';
+}
+
 export type DatosGasto = {
   descripcion: string;
   monto: string;

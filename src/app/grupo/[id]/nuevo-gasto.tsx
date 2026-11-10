@@ -1,17 +1,20 @@
-import { router, useLocalSearchParams, useTheme } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { Chip } from '@/components/chip';
-import { PantallaFormulario } from '@/components/pantalla-formulario';
+import { BotonPrincipal, PantallaCompleta, SeccionFormulario } from '@/components/pantalla-completa';
+import { CirculoRumi, SelectorRumi } from '@/components/selector-rumi';
+import { TarjetaMonto } from '@/components/tarjeta-monto';
 import { hoyLocal, nuevaClaveIdempotencia } from '@/features/gastos/api';
 import { dividirEquitativo, type Participacion } from '@/features/gastos/division';
 import type { DatosIntegrantesGasto } from '@/features/gastos/api';
 import type { GastoDetalle } from '@/features/gastos/api-detalle';
+import { iconoCategoria } from '@/features/gastos/historial';
 import { useDetalleGasto, useEditarGasto } from '@/features/gastos/use-detalle-gasto';
 import { useIntegrantesGasto, useRegistrarGasto } from '@/features/gastos/use-registrar-gasto';
 import {
   CATEGORIAS,
+  formatearEntradaMonto,
   formatearPesos,
   leerMonto,
   LIMITE_DESCRIPCION,
@@ -25,24 +28,24 @@ import { PALETA } from '@/theme/tema';
 
 // Nuevo gasto, o editar uno existente con ?editar=<gastoId> (solo admins).
 export default function NuevoGastoScreen() {
-  const { colors } = useTheme();
   const { id: grupoId, editar } = useLocalSearchParams<{ id: string; editar?: string }>();
   const integrantes = useIntegrantesGasto(grupoId);
   const original = useDetalleGasto(editar ?? '');
+  const titulo = editar ? 'Editar gasto' : 'Nuevo gasto';
 
   const cargando = integrantes.isLoading || (!!editar && original.isLoading);
   if (cargando) {
     return (
-      <PantallaFormulario>
-        <ActivityIndicator color={colors.primary} />
-      </PantallaFormulario>
+      <PantallaCompleta titulo={titulo} volver="‹ Grupo">
+        <ActivityIndicator color={PALETA.morado} style={styles.cargando} />
+      </PantallaCompleta>
     );
   }
   if (integrantes.error || !integrantes.data || (editar && !original.data)) {
     return (
-      <PantallaFormulario>
-        <Text style={styles.error}>No pudimos cargar el grupo. Vuelve a intentarlo.</Text>
-      </PantallaFormulario>
+      <PantallaCompleta titulo={titulo} volver="‹ Grupo">
+        <Text style={styles.errorGeneral}>No pudimos cargar el grupo. Vuelve a intentarlo.</Text>
+      </PantallaCompleta>
     );
   }
 
@@ -62,7 +65,6 @@ type FormularioProps = {
 };
 
 function FormularioGasto({ grupoId, datos: data, original }: FormularioProps) {
-  const { colors } = useTheme();
   const registrar = useRegistrarGasto();
   const editarGasto = useEditarGasto();
   const { isPending, error } = original ? editarGasto : registrar;
@@ -173,183 +175,330 @@ function FormularioGasto({ grupoId, datos: data, original }: FormularioProps) {
     );
   }
 
-  const inputStyle = [styles.input, { color: colors.text, borderColor: colors.border }];
+  const todosMarcados = desmarcados.size === 0;
+  // Personalizada: cuánto va asignado y cuánto falta para llegar al monto.
+  const asignado = participantes.reduce(
+    (suma, id) => suma + (leerMonto(montosPersonalizados[id] ?? '') ?? 0),
+    0,
+  );
+  const falta = montoLeido !== null ? montoLeido - asignado : null;
 
   return (
-    <PantallaFormulario>
-      <Text style={[styles.title, { color: colors.primary }]}>
-        {original ? 'Editar gasto' : 'Nuevo gasto'}
-      </Text>
+    <PantallaCompleta
+      titulo={original ? 'Editar gasto' : 'Nuevo gasto'}
+      subtitulo={original ? 'Corrige los datos y guarda.' : 'Anota lo que se pagó y entre quiénes se divide.'}
+      volver="‹ Grupo"
+      pie={
+        <BotonPrincipal
+          texto={
+            montoLeido !== null
+              ? `${original ? 'Guardar cambios' : 'Guardar gasto'} · ${formatearPesos(montoLeido)}`
+              : original
+                ? 'Guardar cambios'
+                : 'Guardar gasto'
+          }
+          onPress={guardar}
+          cargando={isPending}
+        />
+      }
+    >
       {SIMULAR_GUARDADO && (
         <Text style={styles.modoPrueba}>Modo prueba: el gasto no se guardará en Supabase</Text>
       )}
 
-      <Text style={[styles.label, { color: colors.text }]}>Descripción</Text>
-      <TextInput
-        style={inputStyle}
-        value={descripcion}
-        onChangeText={setDescripcion}
-        placeholder="Supermercado"
-        placeholderTextColor={PALETA.textoSuave}
-        maxLength={LIMITE_DESCRIPCION}
-        accessibilityLabel="Descripción del gasto"
-      />
-      {errores.descripcion && <Text style={styles.error}>{errores.descripcion}</Text>}
+      <TarjetaMonto etiqueta="¿Cuánto fue?" valor={monto} onCambiar={setMonto} error={errores.monto}>
+        <TextInput
+          style={styles.descripcion}
+          value={descripcion}
+          onChangeText={setDescripcion}
+          placeholder="¿En qué? Ej: Supermercado"
+          placeholderTextColor="rgba(255,255,255,0.6)"
+          selectionColor={PALETA.lila}
+          maxLength={LIMITE_DESCRIPCION}
+          accessibilityLabel="Descripción del gasto"
+        />
+        {errores.descripcion && <Text style={styles.errorEnMorado}>{errores.descripcion}</Text>}
+      </TarjetaMonto>
 
-      <Text style={[styles.label, { color: colors.text }]}>Monto (CLP)</Text>
-      <TextInput
-        style={inputStyle}
-        value={monto}
-        onChangeText={setMonto}
-        placeholder="10.000"
-        placeholderTextColor={PALETA.textoSuave}
-        keyboardType="number-pad"
-        accessibilityLabel="Monto en pesos"
-      />
-      {errores.monto && <Text style={styles.error}>{errores.monto}</Text>}
+      <SeccionFormulario titulo="Categoría">
+        <View style={styles.categorias}>
+          {CATEGORIAS.map((c) => {
+            const activa = categoria === c.valor;
+            return (
+              <Pressable
+                key={c.valor}
+                onPress={() => setCategoria(c.valor)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: activa }}
+                accessibilityLabel={c.etiqueta}
+                style={({ pressed }) => [
+                  styles.categoria,
+                  activa && styles.categoriaActiva,
+                  pressed && styles.presionado,
+                ]}
+              >
+                <Text style={styles.categoriaIcono}>{iconoCategoria(c.valor)}</Text>
+                <Text
+                  style={[styles.categoriaTexto, activa && styles.categoriaTextoActivo]}
+                  numberOfLines={2}
+                >
+                  {c.etiqueta}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </SeccionFormulario>
 
-      <Text style={[styles.label, { color: colors.text }]}>Categoría</Text>
-      <View style={styles.chips}>
-        {CATEGORIAS.map((c) => (
-          <Chip
-            key={c.valor}
-            texto={c.etiqueta}
-            activo={categoria === c.valor}
-            onPress={() => setCategoria(c.valor)}
-          />
-        ))}
-      </View>
-
-      <Text style={[styles.label, { color: colors.text }]}>¿Quién pagó?</Text>
-      <View style={styles.chips}>
-        {integrantes.map((i) => (
-          <Chip
-            key={i.id}
-            texto={i.esYo ? `${i.nombre} (tú)` : i.nombre}
-            activo={pagadoPor === i.id}
+      <SeccionFormulario titulo="¿Quién pagó?">
+        <SelectorRumi
+          etiqueta="Pagó"
+          elegido={pagadoPor}
+          onElegir={setPagadoPor}
+          rumis={integrantes.map((i) => ({
+            ...i,
             // Regla 14b: solo un admin registra lo que pagó un pendiente.
-            deshabilitado={i.pendiente && !soyAdmin}
-            onPress={() => setPagadoPor(i.id)}
-          />
-        ))}
-      </View>
-      {!soyAdmin && integrantes.some((i) => i.pendiente) && (
-        <Text style={styles.nota}>Solo un admin registra gastos pagados por un pendiente.</Text>
-      )}
-
-      <Text style={[styles.label, { color: colors.text }]}>División</Text>
-      <View style={styles.chips}>
-        <Chip
-          texto="Equitativa"
-          activo={tipoDivision === 'equitativa'}
-          onPress={() => setTipoDivision('equitativa')}
+            deshabilitado: i.pendiente && !soyAdmin,
+          }))}
         />
-        <Chip
-          texto="Personalizada"
-          activo={tipoDivision === 'personalizada'}
-          onPress={() => setTipoDivision('personalizada')}
-        />
-      </View>
+        {!soyAdmin && integrantes.some((i) => i.pendiente) && (
+          <Text style={styles.nota}>Solo un admin registra gastos pagados por un pendiente.</Text>
+        )}
+      </SeccionFormulario>
 
-      <Text style={[styles.label, { color: colors.text }]}>¿Entre quiénes?</Text>
-      {integrantes.map((i) => {
-        const marcado = !desmarcados.has(i.id);
-        const parte = vistaPrevia.find((p) => p.integranteId === i.id);
-        return (
-          <View key={i.id} style={styles.fila}>
-            <Pressable
-              onPress={() => alternar(i.id)}
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: marcado }}
-              style={styles.filaNombre}
-            >
-              <View style={[styles.casilla, marcado && styles.casillaMarcada]}>
-                {marcado && <Text style={styles.check}>✓</Text>}
+      <SeccionFormulario
+        titulo="¿Entre quiénes?"
+        extra={
+          <Pressable
+            onPress={() =>
+              setDesmarcados(todosMarcados ? new Set(integrantes.map((i) => i.id)) : new Set())
+            }
+            accessibilityRole="button"
+            hitSlop={8}
+          >
+            <Text style={styles.enlace}>{todosMarcados ? 'Ninguno' : 'Todos'}</Text>
+          </Pressable>
+        }
+      >
+        <View style={styles.segmento} accessibilityRole="radiogroup">
+          {(
+            [
+              { valor: 'equitativa', texto: 'Partes iguales' },
+              { valor: 'personalizada', texto: 'Montos distintos' },
+            ] as const
+          ).map((o) => {
+            const activo = tipoDivision === o.valor;
+            return (
+              <Pressable
+                key={o.valor}
+                onPress={() => setTipoDivision(o.valor)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: activo }}
+                style={[styles.segmentoOpcion, activo && styles.segmentoActivo]}
+              >
+                <Text style={[styles.segmentoTexto, activo && styles.segmentoTextoActivo]}>
+                  {o.texto}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <View>
+          {integrantes.map((i, indice) => {
+            const marcado = !desmarcados.has(i.id);
+            const parte = vistaPrevia.find((p) => p.integranteId === i.id);
+            return (
+              <View key={i.id} style={[styles.fila, indice > 0 && styles.filaSeparada]}>
+                <Pressable
+                  onPress={() => alternar(i.id)}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: marcado }}
+                  accessibilityLabel={`${i.nombre}${i.pendiente ? ', pendiente' : ''}`}
+                  style={styles.filaNombre}
+                >
+                  <View style={!marcado && styles.apagado}>
+                    <CirculoRumi nombre={i.nombre} color={i.color} pendiente={i.pendiente} />
+                  </View>
+                  <View style={styles.filaTextos}>
+                    <Text style={[styles.nombre, !marcado && styles.nombreApagado]} numberOfLines={1}>
+                      {i.esYo ? `${i.nombre} (tú)` : i.nombre}
+                    </Text>
+                    {i.pendiente && <Text style={styles.nota}>pendiente</Text>}
+                  </View>
+                </Pressable>
+                {marcado && tipoDivision === 'personalizada' && (
+                  <View style={styles.inputParte}>
+                    <Text style={styles.inputParteSigno}>$</Text>
+                    <TextInput
+                      style={styles.inputParteTexto}
+                      value={montosPersonalizados[i.id] ?? ''}
+                      onChangeText={(texto) =>
+                        setMontosPersonalizados((actual) => ({
+                          ...actual,
+                          [i.id]: formatearEntradaMonto(texto),
+                        }))
+                      }
+                      placeholder="0"
+                      placeholderTextColor={PALETA.textoSuave}
+                      keyboardType="number-pad"
+                      accessibilityLabel={`Monto de ${i.nombre}`}
+                    />
+                  </View>
+                )}
+                {parte && <Text style={styles.parte}>{formatearPesos(parte.monto)}</Text>}
+                <Pressable
+                  onPress={() => alternar(i.id)}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                  hitSlop={8}
+                  style={[styles.casilla, marcado && styles.casillaMarcada]}
+                >
+                  {marcado && <Text style={styles.check}>✓</Text>}
+                </Pressable>
               </View>
-              <Text style={[styles.nombre, { color: colors.text }]}>
-                {i.nombre}
-                {i.pendiente && <Text style={styles.nota}> · pendiente</Text>}
-              </Text>
-            </Pressable>
-            {marcado && tipoDivision === 'personalizada' && (
-              <TextInput
-                style={[inputStyle, styles.inputParte]}
-                value={montosPersonalizados[i.id] ?? ''}
-                onChangeText={(texto) =>
-                  setMontosPersonalizados((actual) => ({ ...actual, [i.id]: texto }))
-                }
-                placeholder="0"
-                placeholderTextColor={PALETA.textoSuave}
-                keyboardType="number-pad"
-                accessibilityLabel={`Monto de ${i.nombre}`}
-              />
-            )}
-            {parte && (
-              <Text style={[styles.parte, { color: colors.text }]}>
-                {formatearPesos(parte.monto)}
-              </Text>
-            )}
+            );
+          })}
+        </View>
+
+        {tipoDivision === 'personalizada' && falta !== null && (
+          <View style={[styles.resumen, falta === 0 && styles.resumenOk]}>
+            <Text style={[styles.resumenTexto, falta === 0 && styles.resumenTextoOk]}>
+              {falta === 0
+                ? '✓ Los montos suman el total'
+                : falta > 0
+                  ? `Faltan ${formatearPesos(falta)} por asignar`
+                  : `Te pasaste por ${formatearPesos(-falta)}`}
+            </Text>
           </View>
-        );
-      })}
-      {errores.participantes && <Text style={styles.error}>{errores.participantes}</Text>}
-      {errores.personalizada && <Text style={styles.error}>{errores.personalizada}</Text>}
+        )}
+        {errores.participantes && <Text style={styles.error}>{errores.participantes}</Text>}
+        {errores.personalizada && <Text style={styles.error}>{errores.personalizada}</Text>}
+      </SeccionFormulario>
 
       {error && (
-        <Text style={styles.error}>
+        <Text style={styles.errorGeneral}>
           {original ? error.message : 'No pudimos guardar el gasto. Intenta de nuevo.'}
         </Text>
       )}
-
-      <Pressable
-        style={[styles.button, { backgroundColor: colors.primary, opacity: isPending ? 0.6 : 1 }]}
-        onPress={guardar}
-        disabled={isPending}
-        accessibilityRole="button"
-      >
-        {isPending ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Guardar</Text>
-        )}
-      </Pressable>
-    </PantallaFormulario>
+    </PantallaCompleta>
   );
 }
 
 const styles = StyleSheet.create({
+  cargando: { marginVertical: 40 },
   modoPrueba: {
     backgroundColor: PALETA.lilaClaro,
     color: PALETA.morado,
     fontSize: 13,
     fontWeight: '600',
     textAlign: 'center',
-    borderRadius: 8,
-    padding: 8,
+    borderRadius: 12,
+    padding: 10,
     overflow: 'hidden',
   },
-  title: { fontSize: 28, fontWeight: '700', textAlign: 'center', marginBottom: 8 },
-  label: { fontSize: 16, marginTop: 8 },
-  input: { borderWidth: 1, borderRadius: 12, padding: 14, fontSize: 18 },
-  error: { color: PALETA.error, fontSize: 14 },
-  nota: { color: PALETA.textoSuave, fontSize: 13 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  fila: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 48 },
-  filaNombre: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
-  casilla: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
+  descripcion: {
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 16,
+    fontWeight: '600',
+    color: PALETA.blanco,
+  },
+  errorEnMorado: { color: PALETA.lilaClaro, fontSize: 13, fontWeight: '700' },
+
+  categorias: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  categoria: {
+    width: '23%',
+    flexGrow: 1,
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    borderRadius: 16,
     borderWidth: 2,
-    borderColor: PALETA.morado,
+    borderColor: 'transparent',
+    backgroundColor: PALETA.crema,
+  },
+  categoriaActiva: { borderColor: PALETA.violeta, backgroundColor: PALETA.lilaClaro },
+  categoriaIcono: { fontSize: 26 },
+  categoriaTexto: { fontSize: 12, fontWeight: '600', color: PALETA.textoSuave, textAlign: 'center' },
+  categoriaTextoActivo: { color: PALETA.morado, fontWeight: '800' },
+  presionado: { opacity: 0.8 },
+
+  enlace: { color: PALETA.morado, fontSize: 14, fontWeight: '700' },
+  segmento: {
+    flexDirection: 'row',
+    backgroundColor: PALETA.crema,
+    borderRadius: 14,
+    padding: 4,
+  },
+  segmentoOpcion: { flex: 1, borderRadius: 11, paddingVertical: 10, alignItems: 'center' },
+  segmentoActivo: {
+    backgroundColor: PALETA.blanco,
+    shadowColor: PALETA.moradoOscuro,
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  segmentoTexto: { fontSize: 14, fontWeight: '600', color: PALETA.textoSuave },
+  segmentoTextoActivo: { color: PALETA.morado, fontWeight: '800' },
+
+  fila: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 60 },
+  filaSeparada: { borderTopWidth: 1, borderTopColor: PALETA.lilaClaro },
+  filaNombre: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 },
+  filaTextos: { flexShrink: 1 },
+  apagado: { opacity: 0.35 },
+  nombre: { fontSize: 16, fontWeight: '700', color: PALETA.moradoOscuro },
+  nombreApagado: { color: PALETA.textoSuave, fontWeight: '500' },
+  parte: { fontSize: 16, fontWeight: '800', color: PALETA.morado },
+  inputParte: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: 116,
+    borderWidth: 1.5,
+    borderColor: PALETA.borde,
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    backgroundColor: PALETA.crema,
+  },
+  inputParteSigno: { fontSize: 16, fontWeight: '700', color: PALETA.textoSuave },
+  inputParteTexto: {
+    flex: 1,
+    paddingVertical: 8,
+    fontSize: 16,
+    fontWeight: '700',
+    color: PALETA.moradoOscuro,
+    textAlign: 'right',
+  },
+  casilla: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 2,
+    borderColor: PALETA.borde,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  casillaMarcada: { backgroundColor: PALETA.morado },
-  check: { color: PALETA.blanco, fontSize: 14, fontWeight: '700' },
-  nombre: { fontSize: 16, flexShrink: 1 },
-  inputParte: { width: 120, padding: 10, fontSize: 16, textAlign: 'right' },
-  parte: { fontSize: 16, fontWeight: '600' },
-  button: { borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 16 },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  casillaMarcada: { backgroundColor: PALETA.morado, borderColor: PALETA.morado },
+  check: { color: PALETA.blanco, fontSize: 13, fontWeight: '800' },
+
+  resumen: { backgroundColor: PALETA.lilaClaro, borderRadius: 12, padding: 12 },
+  resumenOk: { backgroundColor: '#E3F5EA' },
+  resumenTexto: { color: PALETA.morado, fontSize: 14, fontWeight: '700', textAlign: 'center' },
+  resumenTextoOk: { color: '#1E8E5A' },
+
+  nota: { color: PALETA.textoSuave, fontSize: 13 },
+  error: { color: PALETA.error, fontSize: 14 },
+  errorGeneral: {
+    color: PALETA.error,
+    fontSize: 14,
+    fontWeight: '600',
+    backgroundColor: '#FDECEC',
+    borderRadius: 12,
+    padding: 12,
+    overflow: 'hidden',
+  },
 });

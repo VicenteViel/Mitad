@@ -1,4 +1,10 @@
-import { formatearPesos, leerMonto, validarGasto, type DatosGasto } from './validar-gasto';
+import {
+  formatearEntradaMonto,
+  formatearPesos,
+  leerMonto,
+  validarGasto,
+  type DatosGasto,
+} from './validar-gasto';
 
 const base: DatosGasto = {
   descripcion: 'Supermercado',
@@ -90,5 +96,25 @@ describe('validarGasto', () => {
       montosPersonalizados: { ana: '10000', diego: '500' },
     });
     expect(errores).toEqual({});
+  });
+});
+
+describe('formatearEntradaMonto', () => {
+  it('pone los puntos de miles mientras se escribe', () => {
+    expect(formatearEntradaMonto('10000')).toBe('10.000');
+    expect(formatearEntradaMonto('10.0005')).toBe('100.005');
+    expect(formatearEntradaMonto('999')).toBe('999');
+  });
+
+  it('descarta letras, ceros iniciales y lo que pase de 9 cifras', () => {
+    expect(formatearEntradaMonto('')).toBe('');
+    expect(formatearEntradaMonto('abc')).toBe('');
+    expect(formatearEntradaMonto('000')).toBe('');
+    expect(formatearEntradaMonto('0012')).toBe('12');
+    expect(formatearEntradaMonto('12345678901')).toBe('123.456.789');
+  });
+
+  it('lo que devuelve lo entiende leerMonto', () => {
+    expect(leerMonto(formatearEntradaMonto('1234567'))).toBe(1234567);
   });
 });

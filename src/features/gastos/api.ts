@@ -1,3 +1,4 @@
+import { leerColor, type Color } from '@/features/grupos/apariencia';
 import type { Json } from '@/lib/database.types';
 import { esperar, SIMULAR_GUARDADO } from '@/lib/desarrollo';
 import { supabase } from '@/lib/supabase';
@@ -11,6 +12,7 @@ export type IntegranteGasto = {
   nombre: string;
   pendiente: boolean;
   esYo: boolean;
+  color: Color;
 };
 
 export type DatosIntegrantesGasto = {
@@ -26,7 +28,7 @@ export async function obtenerIntegrantesGasto(grupoId: string): Promise<DatosInt
 
   const { data, error } = await supabase
     .from('integrantes')
-    .select('id, nombre, usuario_id, rol')
+    .select('id, nombre, usuario_id, rol, avatar, color')
     .eq('grupo_id', grupoId)
     .or('usuario_id.not.is.null,salio_en.is.null')
     .order('unido_en')
@@ -42,6 +44,7 @@ export async function obtenerIntegrantesGasto(grupoId: string): Promise<DatosInt
       nombre: i.nombre,
       pendiente: i.usuario_id === null,
       esYo: i.usuario_id === usuarioId,
+      color: leerColor(i.color, i.avatar === 'mujer' ? 'mujer' : 'hombre'),
     })),
     soyAdmin: data.some((i) => i.usuario_id === usuarioId && i.rol === 'admin'),
   };
