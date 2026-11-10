@@ -1,3 +1,4 @@
+import { leerColor, type Color } from '@/features/grupos/apariencia';
 import { esperar, SIMULAR_GUARDADO } from '@/lib/desarrollo';
 import { supabase } from '@/lib/supabase';
 
@@ -5,12 +6,12 @@ import type { RumiParaPermiso } from './permisos';
 
 // Todos los rumis del grupo, incluidos los que salieron: sus nombres hacen
 // falta para mostrar saldos e historial antiguos.
-export type RumiSaldo = RumiParaPermiso & { nombre: string };
+export type RumiSaldo = RumiParaPermiso & { nombre: string; color: Color };
 
 export async function obtenerRumisSaldo(grupoId: string): Promise<RumiSaldo[]> {
   const { data, error } = await supabase
     .from('integrantes')
-    .select('id, nombre, rol, usuario_id, salio_en')
+    .select('id, nombre, rol, usuario_id, salio_en, avatar, color')
     .eq('grupo_id', grupoId)
     .order('unido_en');
 
@@ -24,6 +25,7 @@ export async function obtenerRumisSaldo(grupoId: string): Promise<RumiSaldo[]> {
     rol: i.rol === 'admin' ? 'admin' : 'integrante',
     usuarioId: i.usuario_id,
     salio: i.salio_en !== null,
+    color: leerColor(i.color, i.avatar === 'mujer' ? 'mujer' : 'hombre'),
   }));
 }
 
