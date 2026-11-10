@@ -32,6 +32,7 @@ Registro de las decisiones de producto y arquitectura. Si una decisión cambia, 
 10b. **Bienvenida antes del login:** "Soy nuevo" (ingresa y pasa a crear grupo) o "Ya tengo un grupo" (para volver, por ejemplo tras perder el teléfono). Al volver se pregunta si era admin o integrante:
    - *Admin, o integrante con correo:* ingresa con el mismo correo y recupera sus grupos, porque están vinculados a su cuenta. El código enviado al correo prueba que es la misma persona; la app nunca entrega un grupo solo porque alguien dice haber sido admin.
    - *Integrante sin correo:* pide al admin un nuevo link de invitación (regla 9).
+10c. **Al aceptar una invitación:** pantalla "¡Te has unido a un grupo!" (nombre y descripción del grupo) y luego "Tus datos": foto de perfil (próximamente; cambia la regla 38), nombre puesto por el admin y **no editable**, **apodo** opcional y **correo opcional**. Si no deja correo, se le advierte y en Inicio queda el aviso "Agrega tu correo"; si lo deja, queda "Verifica tu correo" hasta confirmarlo. El correo es su forma de recuperar el lugar en el grupo.
 
 ### Permisos
 

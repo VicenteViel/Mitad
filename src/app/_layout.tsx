@@ -32,6 +32,7 @@ export default function RootLayout() {
           <Stack.Protected guard={!!sesion} redirectTo="/bienvenida">
             <Stack.Screen name="index" />
             <Stack.Screen name="(nuevo-grupo)" />
+            <Stack.Screen name="(unirse)" options={{ gestureEnabled: false }} />
           </Stack.Protected>
         </Stack>
       </ThemeProvider>
