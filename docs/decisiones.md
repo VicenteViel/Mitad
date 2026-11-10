@@ -3,7 +3,7 @@
 Registro de las decisiones de producto y arquitectura. Si una decisión cambia, se edita aquí y se actualiza la fecha.
 
 - **Última actualización:** 2026-11-09
-- **Estado:** Etapa 1 (Rumi gratis) definida y con modelo de datos aprobado; agregados integrantes pendientes y apariencia (ícono + color). Etapas 2 y 3 con decisiones pendientes.
+- **Estado:** Etapa 1 (Rumi gratis) **implementada** (2026-11-10): grupos, rumis pendientes, invitaciones, gastos con evidencia, saldos, pagos entre rumis, edición y borrado, ajustes del grupo y Mi cuenta. Falta lo de "Pendiente antes de la beta". Etapas 2 y 3 con decisiones pendientes.
 - **Modelo de datos:** [modelo-datos.md](modelo-datos.md)
 
 ---
@@ -58,7 +58,7 @@ Registro de las decisiones de producto y arquitectura. Si una decisión cambia, 
 
 ### App
 
-22. **Un grupo activo global**, con selector en Inicio. Todas las pestañas muestran ese grupo.
+22. **Sin grupo activo global en la Etapa 1.** Inicio lista todos tus grupos y cada grupo abre su propia pantalla (saldos, gastos, pagos, ajustes). Con un solo módulo no hacen falta pestañas ni selector. Se revisa al llegar Hoy Te Toca, cuando haya dos módulos por grupo. *(Reemplaza "un grupo activo global con selector", 2026-11-10.)*
 23. **Se empieza con Expo Go.** Se pasa a development build al probar los links de invitación y antes de la beta (y más adelante para notificaciones y pagos).
 24. **Sin Zustand** hasta que haga falta: TanStack Query + estado local.
 25. **SMTP propio** para los correos OTP. El SMTP por defecto de Supabase es solo para desarrollo.
@@ -83,10 +83,19 @@ Detalle de tablas, cálculos y funciones en [modelo-datos.md](modelo-datos.md).
 35. **Todos los admins son iguales.** Uno puede quitarle el rol a otro, pero nunca al último admin. Quien sale del grupo pierde el rol.
 36. **No hay "eliminar grupo" en la Etapa 1.** Si sale el último integrante con usuario vinculado, el grupo y sus datos se borran, aunque queden pendientes (nadie podría usarlo).
 37. **Re-vincular solo aplica a integrantes pendientes, sin cuenta o ex-integrantes** y nunca entrega el rol de admin. Un usuario registrado que cambia de teléfono inicia sesión con su correo.
-38. **Apariencia: ícono + color, sin fotos en la Etapa 1.** Cada integrante tiene un `avatar` (ícono `hombre` o `mujer`) y un `color`. Al agregarlo, el admin elige el ícono y el color parte en azul (hombre) o rosado (mujer). Una vez activo, cada integrante cambia su ícono y color desde su perfil, con más colores disponibles. Se guarda como apariencia, no como sexo. **No se registran sexo ni orientación sexual** (datos sensibles sin uso en la app).
-39. **Sin preferencias guardadas en la base de datos:** el grupo activo se recuerda en el teléfono.
+38. **Apariencia: ícono + color, sin fotos en la Etapa 1.** Cada integrante tiene un `avatar` (ícono `hombre` o `mujer`) y un `color`. Al agregarlo, el admin elige el ícono y el color parte en azul (hombre) o rosado (mujer). Una vez activo, cada integrante cambia su ícono y color desde su perfil, entre 8 colores (azul, rosado, morado, celeste, verde, amarillo, naranja, rojo). Se guarda como apariencia, no como sexo. **No se registran sexo ni orientación sexual** (datos sensibles sin uso en la app).
+39. **Sin preferencias guardadas en la base de datos.**
 40. **Sin Realtime en la Etapa 1:** los datos se actualizan al abrir la app o al deslizar hacia abajo.
 41. **Grupo sin integrantes registrados.** Si el último admin sale o elimina su cuenta y solo quedan integrantes sin cuenta, el grupo queda sin admin. Los gastos y liquidaciones siguen funcionando, y el primer integrante que agregue su correo puede tomar el rol de admin.
+
+### Reglas surgidas al implementar (2026-11-10)
+
+42. **Sin tabla `perfiles`.** El nombre se define por grupo (lo pone el admin al agregar al rumi) y cada rumi puede ponerse un apodo en ese grupo. No hay "nombre global" que copiar, así que la tabla no aporta nada en la Etapa 1. El correo sigue solo en Supabase Auth.
+43. **Quién registra un pago entre rumis:** cualquiera de las dos partes. Si una parte es pendiente, solo un admin. Si una parte ya salió del grupo, también un admin que no sea parte. La app sugiere el monto de la deuda.
+44. **Editar o eliminar gastos y pagos: solo admins.** Al editar un gasto, los participantes se eligen entre los rumis actuales (activos y pendientes); quienes ya salieron no se pueden volver a agregar.
+45. **Mi cuenta:** correo (agregar o confirmar), cerrar sesión y eliminar cuenta. Si la cuenta no tiene correo confirmado, cerrar sesión advierte que no podrá volver a entrar sin una invitación nueva.
+46. **Eliminar la cuenta** saca al usuario de todos sus grupos (con sucesión de admin), cambia su nombre a "Ex-integrante" y borra el usuario de Supabase Auth. Los gastos, pagos y saldos se conservan para el resto. Lo hace una Edge Function (`eliminar-cuenta`).
+47. **CI en GitHub Actions:** cada PR corre lint, TypeScript y tests (`npm run verificar` hace lo mismo en local).
 
 ---
 

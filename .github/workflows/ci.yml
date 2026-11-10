@@ -1,0 +1,48 @@
+# Verificación automática en cada Pull Request y en cada push a main:
+# lint, TypeScript y tests. Si algo falla, el PR lo muestra en rojo.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verificar:
+    name: Lint, tipos y tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # Valores de relleno: los tests no se conectan a Supabase, pero el
+      # cliente exige que existan las variables.
+      EXPO_PUBLIC_SUPABASE_URL: https://ejemplo.supabase.co
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: clave-de-prueba
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      # expo start genera .expo/types/router.d.ts (rutas tipadas). Si no se
+      # genera, TypeScript sigue funcionando con rutas sin tipar.
+      - name: Generar rutas tipadas
+        run: timeout 90 npx expo start --port 8081 || true
+
+      - name: TypeScript
+        run: npm run typecheck
+
+      - name: Tests
+        run: npm test -- --ci
