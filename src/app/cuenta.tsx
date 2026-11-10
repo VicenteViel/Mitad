@@ -62,7 +62,7 @@ export default function CuentaScreen() {
   function confirmarEliminar() {
     Alert.alert(
       '¿Eliminar tu cuenta?',
-      'Saldrás de todos tus grupos y tu nombre quedará como "Ex-integrante". Tus gastos y saldos se conservan para el resto. Esto no se puede deshacer.',
+      'Saldrás de todos tus grupos y tu nombre quedará como "Ex-rumi". Tus gastos y saldos se conservan para el resto. Esto no se puede deshacer.',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -174,7 +174,7 @@ export default function CuentaScreen() {
         <Text style={e.titulo}>Eliminar cuenta</Text>
         <Text style={e.ayuda}>
           Sales de todos tus grupos y tus datos personales se borran. Tus gastos y saldos quedan
-          en el historial de cada grupo como “Ex-integrante”.
+          en el historial de cada grupo como “Ex-rumi”.
         </Text>
         {eliminar.isError && <Text style={e.error}>{eliminar.error.message}</Text>}
         <Pressable

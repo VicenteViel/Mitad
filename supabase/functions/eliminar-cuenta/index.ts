@@ -2,7 +2,7 @@
 //
 // 1. Verifica el JWT de la persona (solo puede borrarse a sí misma).
 // 2. Anonimiza sus integrantes en todos sus grupos (anonimizar_usuario):
-//    quedan como "Ex-integrante", sin acceso, conservando gastos y saldos.
+//    quedan como "Ex-rumi", sin acceso, conservando gastos y saldos.
 // 3. Borra el usuario de Supabase Auth (requiere la clave de servicio, que
 //    solo existe en el servidor y nunca en la app).
 //

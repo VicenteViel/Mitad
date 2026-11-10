@@ -96,17 +96,17 @@ Se priorizará una arquitectura sencilla, preparada para evolucionar sin incorpo
 
 ### Fase 1 — MVP gratuito
 
-- [ ] Configuración inicial del proyecto.
-- [ ] Arquitectura base y navegación.
-- [ ] Sistema de autenticación.
-- [ ] Creación y administración de grupos.
-- [ ] Invitaciones de integrantes.
-- [ ] Registro de gastos.
-- [ ] División de gastos.
-- [ ] Cálculo de balances.
-- [ ] Registro de liquidaciones.
-- [ ] Historial de movimientos.
-- [ ] Pruebas y validaciones.
+- [x] Configuración inicial del proyecto.
+- [x] Arquitectura base y navegación.
+- [x] Sistema de autenticación.
+- [x] Creación y administración de grupos.
+- [x] Invitaciones de integrantes.
+- [x] Registro de gastos.
+- [x] División de gastos.
+- [x] Cálculo de balances.
+- [x] Registro de liquidaciones.
+- [x] Historial de movimientos.
+- [x] Pruebas y validaciones (lógica de dinero y permisos con tests; CI en cada PR).
 
 ### Fase 2 — Hoy Te Toca
 
