@@ -39,6 +39,99 @@ export type Database = {
   }
   public: {
     Tables: {
+      gastos: {
+        Row: {
+          borrado_en: string | null
+          borrado_por: string | null
+          categoria: string
+          clave_idempotencia: string
+          creado_en: string
+          creado_por: string
+          descripcion: string
+          editado_en: string | null
+          editado_por: string | null
+          fecha: string
+          grupo_id: string
+          id: string
+          monto: number
+          pagado_por: string
+          tipo_division: string
+          version: number
+        }
+        Insert: {
+          borrado_en?: string | null
+          borrado_por?: string | null
+          categoria: string
+          clave_idempotencia: string
+          creado_en?: string
+          creado_por: string
+          descripcion: string
+          editado_en?: string | null
+          editado_por?: string | null
+          fecha?: string
+          grupo_id: string
+          id?: string
+          monto: number
+          pagado_por: string
+          tipo_division: string
+          version?: number
+        }
+        Update: {
+          borrado_en?: string | null
+          borrado_por?: string | null
+          categoria?: string
+          clave_idempotencia?: string
+          creado_en?: string
+          creado_por?: string
+          descripcion?: string
+          editado_en?: string | null
+          editado_por?: string | null
+          fecha?: string
+          grupo_id?: string
+          id?: string
+          monto?: number
+          pagado_por?: string
+          tipo_division?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gastos_borrado_por_fkey"
+            columns: ["borrado_por"]
+            isOneToOne: false
+            referencedRelation: "integrantes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gastos_creado_por_fkey"
+            columns: ["creado_por"]
+            isOneToOne: false
+            referencedRelation: "integrantes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gastos_editado_por_fkey"
+            columns: ["editado_por"]
+            isOneToOne: false
+            referencedRelation: "integrantes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gastos_grupo_id_fkey"
+            columns: ["grupo_id"]
+            isOneToOne: false
+            referencedRelation: "grupos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gastos_pagado_por_fkey"
+            columns: ["pagado_por"]
+            isOneToOne: false
+            referencedRelation: "integrantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       grupos: {
         Row: {
           creado_en: string
@@ -104,6 +197,39 @@ export type Database = {
           },
         ]
       }
+      participaciones: {
+        Row: {
+          gasto_id: string
+          integrante_id: string
+          monto: number
+        }
+        Insert: {
+          gasto_id: string
+          integrante_id: string
+          monto: number
+        }
+        Update: {
+          gasto_id?: string
+          integrante_id?: string
+          monto?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "participaciones_gasto_id_fkey"
+            columns: ["gasto_id"]
+            isOneToOne: false
+            referencedRelation: "gastos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "participaciones_integrante_id_fkey"
+            columns: ["integrante_id"]
+            isOneToOne: false
+            referencedRelation: "integrantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -122,6 +248,20 @@ export type Database = {
           p_integrantes: Json
           p_nombre: string
           p_nombre_integrante: string
+        }
+        Returns: string
+      }
+      registrar_gasto: {
+        Args: {
+          p_categoria: string
+          p_clave_idempotencia: string
+          p_descripcion: string
+          p_fecha: string
+          p_grupo_id: string
+          p_monto: number
+          p_pagado_por: string
+          p_participantes: Json
+          p_tipo_division: string
         }
         Returns: string
       }
