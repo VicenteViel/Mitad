@@ -3,6 +3,7 @@ import { esperar, SIMULAR_GUARDADO } from '@/lib/desarrollo';
 import { supabase } from '@/lib/supabase';
 
 import type { Participacion } from './division';
+import { esCategoria, type GastoHistorial } from './historial';
 import type { Categoria, TipoDivision } from './validar-gasto';
 
 export type IntegranteGasto = {
@@ -91,6 +92,54 @@ export async function registrarGasto(gasto: NuevoGasto): Promise<string> {
 
   return data;
 }
+
+// Historial del grupo, del más reciente al más antiguo (fecha y luego hora de
+// creación). Incluye los borrados para mostrarlos como "eliminado" (regla 33).
+export async function obtenerGastos(grupoId: string): Promise<GastoHistorial[]> {
+  const { data, error } = await supabase
+    .from('gastos')
+    .select(
+      'id, descripcion, monto, categoria, fecha, borrado_en, pagado_por, ' +
+        'pagador:integrantes!gastos_pagado_por_fkey(nombre), ' +
+        'participaciones(integrante_id, monto)',
+    )
+    .eq('grupo_id', grupoId)
+    .order('fecha', { ascending: false })
+    .order('creado_en', { ascending: false });
+
+  if (error) {
+    throw new Error(`Error al cargar los gastos: ${error.message}`);
+  }
+
+  return (data as unknown as FilaGasto[]).map((g) => ({
+    id: g.id,
+    descripcion: g.descripcion,
+    monto: g.monto,
+    categoria: esCategoria(g.categoria) ? g.categoria : 'otros',
+    fecha: g.fecha,
+    eliminado: g.borrado_en !== null,
+    pagadoPorId: g.pagado_por,
+    pagadoPorNombre: g.pagador?.nombre ?? 'Alguien',
+    participaciones: g.participaciones.map((p) => ({
+      integranteId: p.integrante_id,
+      monto: p.monto,
+    })),
+  }));
+}
+
+// Forma de cada fila de la consulta anterior (el embebido con alias no se
+// infiere bien de los tipos generados).
+type FilaGasto = {
+  id: string;
+  descripcion: string;
+  monto: number;
+  categoria: string;
+  fecha: string;
+  borrado_en: string | null;
+  pagado_por: string;
+  pagador: { nombre: string } | null;
+  participaciones: { integrante_id: string; monto: number }[];
+};
 
 // Clave de idempotencia (uuid v4). expo-crypto no está instalado.
 export function nuevaClaveIdempotencia(): string {

@@ -12,6 +12,9 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useSesion } from '@/features/auth/use-sesion';
+import { hoyLocal } from '@/features/gastos/api';
+import { FilaGasto } from '@/features/gastos/components/fila-gasto';
+import { useGastos } from '@/features/gastos/use-registrar-gasto';
 import { FilaIntegranteGrupo } from '@/features/grupos/components/fila-integrante-grupo';
 import { contarIntegrantes, etiquetasIntegrante } from '@/features/grupos/resumen-integrantes';
 import { useGrupo } from '@/features/grupos/use-grupo';
@@ -23,10 +26,12 @@ export default function GrupoScreen() {
   const insets = useSafeAreaInsets();
   const { sesion } = useSesion();
   const { data: grupo, isPending, isError, refetch, isRefetching } = useGrupo(grupoId);
+  const gastos = useGastos(grupoId);
 
   const rutaNuevoGasto = `/grupo/${grupoId}/nuevo-gasto` as Href;
-  const soyAdmin =
-    grupo?.integrantes.some((i) => i.usuarioId === sesion?.user.id && i.rol === 'admin') ?? false;
+  const yo = grupo?.integrantes.find((i) => i.usuarioId === sesion?.user.id);
+  const soyAdmin = yo?.rol === 'admin';
+  const hoy = hoyLocal();
 
   return (
     <ScrollView
@@ -34,8 +39,11 @@ export default function GrupoScreen() {
       contentContainerStyle={[styles.contenido, { paddingTop: insets.top + 8 }]}
       refreshControl={
         <RefreshControl
-          refreshing={isRefetching}
-          onRefresh={() => void refetch()}
+          refreshing={isRefetching || gastos.isRefetching}
+          onRefresh={() => {
+            void refetch();
+            void gastos.refetch();
+          }}
           tintColor={PALETA.morado}
         />
       }
@@ -89,6 +97,38 @@ export default function GrupoScreen() {
             </Pressable>
           </View>
 
+          {/* Gastos: historial del grupo */}
+          <Text style={styles.seccion}>Gastos</Text>
+          {gastos.isPending && <ActivityIndicator color={PALETA.morado} />}
+          {gastos.isError && (
+            <Pressable
+              onPress={() => gastos.refetch()}
+              accessibilityRole="button"
+              style={styles.error}
+            >
+              <Text style={styles.errorTitulo}>No pudimos cargar los gastos</Text>
+              <Text style={styles.errorTexto}>Toca para intentar de nuevo.</Text>
+            </Pressable>
+          )}
+          {gastos.data?.length === 0 && (
+            <View style={styles.vacio}>
+              <Text style={styles.vacioTitulo}>Todavía no hay gastos</Text>
+              <Text style={styles.vacioTexto}>
+                Toca “Agregar gasto” para registrar el primero.
+              </Text>
+            </View>
+          )}
+          {gastos.data && gastos.data.length > 0 && (
+            <View style={styles.tarjeta}>
+              {gastos.data.map((gasto, i) => (
+                <View key={gasto.id}>
+                  {i > 0 && <View style={styles.separador} />}
+                  <FilaGasto gasto={gasto} miIntegranteId={yo?.id} hoy={hoy} />
+                </View>
+              ))}
+            </View>
+          )}
+
           {/* Rumis (integrantes) */}
           <Text style={styles.seccion}>Rumis</Text>
           <View style={styles.tarjeta}>
@@ -109,15 +149,6 @@ export default function GrupoScreen() {
                 />
               </View>
             ))}
-          </View>
-
-          {/* Gastos (llegan con el registro de gastos) */}
-          <Text style={styles.seccion}>Gastos</Text>
-          <View style={styles.vacio}>
-            <Text style={styles.vacioTitulo}>Todavía no hay gastos</Text>
-            <Text style={styles.vacioTexto}>
-              Cuando registren el primero, aquí verán el historial y quién le debe a quién.
-            </Text>
           </View>
         </>
       )}
