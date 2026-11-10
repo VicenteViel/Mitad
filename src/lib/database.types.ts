@@ -433,6 +433,10 @@ export type Database = {
         Args: { p_grupo_id: string; p_integrantes: Json }
         Returns: number
       }
+      anonimizar_usuario: {
+        Args: { p_usuario_id: string }
+        Returns: undefined
+      }
       borrar_evidencia: { Args: { p_evidencia_id: string }; Returns: string }
       cambiar_apariencia: {
         Args: { p_avatar: string; p_color: string; p_integrante_id: string }

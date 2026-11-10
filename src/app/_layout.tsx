@@ -33,6 +33,7 @@ export default function RootLayout() {
             <Stack.Screen name="(unirse)" options={{ gestureEnabled: false }} />
             {/* Detalle del grupo y lo que cuelga de él (por ejemplo, nuevo gasto). */}
             <Stack.Screen name="grupo/[id]" />
+            <Stack.Screen name="cuenta" />
           </Stack.Protected>
           {/* Invitaciones: funcionan con o sin sesión (quien no tiene cuenta
               entra sin correo al aceptar). */}
