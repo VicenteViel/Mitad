@@ -26,7 +26,7 @@ export default function IngresarCodigoScreen() {
   }
 
   return (
-    <PantallaFormulario>
+    <PantallaFormulario logo>
       <Text style={styles.titulo} accessibilityRole="header">
         Me invitaron
       </Text>

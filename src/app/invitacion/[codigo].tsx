@@ -31,7 +31,7 @@ export default function AceptarInvitacionScreen() {
   }, [codigo, mutate]);
 
   return (
-    <PantallaFormulario>
+    <PantallaFormulario logo>
       {!isError && (
         <>
           <ActivityIndicator color={PALETA.morado} size="large" />

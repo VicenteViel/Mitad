@@ -1,4 +1,5 @@
 import { router, useLocalSearchParams, type Href } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import {
   ActivityIndicator,
   Pressable,
@@ -39,6 +40,7 @@ export default function GrupoScreen() {
         />
       }
     >
+      <StatusBar style="dark" />
       <Pressable
         onPress={() => router.back()}
         accessibilityRole="button"

@@ -55,7 +55,7 @@ export default function IngresarScreen() {
   const inputStyle = [styles.input, { color: colors.text, borderColor: colors.border }];
 
   return (
-    <PantallaFormulario>
+    <PantallaFormulario logo>
       <Text style={[styles.title, { color: colors.primary }]}>Rumi</Text>
       <Text style={styles.subtitulo}>
         {paso === 'correo' ? 'Ingresa con tu correo' : 'Revisa tu correo'}
@@ -146,7 +146,7 @@ export default function IngresarScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 40, fontWeight: '700', textAlign: 'center' },
+  title: { fontSize: 34, fontWeight: '800', textAlign: 'center' },
   subtitulo: { fontSize: 16, color: PALETA.textoSuave, textAlign: 'center', marginBottom: 12 },
   nota: { backgroundColor: PALETA.lilaClaro, borderRadius: 14, padding: 14, gap: 4, marginTop: 8 },
   notaTitulo: { fontSize: 14, fontWeight: '700', color: PALETA.moradoOscuro },
